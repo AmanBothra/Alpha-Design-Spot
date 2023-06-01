@@ -14,7 +14,6 @@ class UserAdmin(DefaultUserAdmin):
     )
     list_filter = ("date_joined",)
     search_fields = (
-        "username",
         "email",
     )
     add_fieldsets = (
@@ -27,8 +26,8 @@ class UserAdmin(DefaultUserAdmin):
         ),
     )
     fieldsets = (
-        (None, {"fields": ("username", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "email", "whatsapp_number", "user_type")}),
+        (None, {"fields": ("email", "password")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "whatsapp_number", "user_type")}),
         (
             "Permissions",
             {

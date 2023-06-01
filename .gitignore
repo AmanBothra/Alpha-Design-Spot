@@ -286,6 +286,7 @@ db_schema.pdf
 
 *.pyc
 *.whl
+8.sqlite3
 
 assets/
 migrations/

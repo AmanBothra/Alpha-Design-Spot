@@ -6,7 +6,11 @@ from .models import User
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'user_type', 'whatsapp_number', 'username', 'password')
+        fields = (
+            'first_name', 'last_name', 'email', 'user_type', 'whatsapp_number', 'address', 'pincode',
+            'city', 'password', "is_verify"
+            
+        )
         extra_kwargs = {
             'password': {'write_only': True},
         }

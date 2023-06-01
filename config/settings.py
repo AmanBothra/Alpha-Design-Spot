@@ -1,7 +1,9 @@
-import environ
 import os
 import sys
+import datetime
 from pathlib import Path
+
+import environ
 
 # -------------------------------------------------------------------
 env = environ.Env()
@@ -32,13 +34,14 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'corsheaders',
-    'drf_yasg',
     'rest_framework_simplejwt',
 ]
 
 LOCAL_APPS = [
+    'config',
     'app_modules.account.apps.AccountConfig',
-    
+    'app_modules.post.apps.PostConfig',
+    'app_modules.master.apps.MasterConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -75,24 +78,18 @@ TEMPLATES = [
 ]
 
 # -------------------------- Database Configuration --------------------------
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("POSTGRES_USER"),
+        "PASSWORD": env("POSTGRES_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": 5432,
+        "TIME_ZONE": "Asia/Kolkata",
     }
 }
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": config("POSTGRES_DB"),
-#         "USER": config("POSTGRES_USER"),
-#         "PASSWORD": config("POSTGRES_PASSWORD"),
-#         "HOST": config("DB_HOST"),
-#         "PORT": config("DB_PORT", default=5432),
-#         "TIME_ZONE": config("TIME_ZONE", default="Asia/Kolkata"),
-#     }
-# }
 
 # ------------------------------- Password validation -------------------------
 AUTH_PASSWORD_VALIDATORS = [
@@ -109,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ---------------------------- Internationalization --------------------------
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = env.str("TIME_ZONE", default="UTC")
+TIME_ZONE = env.str("TIME_ZONE", default="Asia/Kolkata")
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -123,7 +120,6 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, "staticfiles"),)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------- REST and CORS Configuration -----------------------
@@ -134,13 +130,26 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_AUTHENTICATION_CLASSES": [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        "rest_framework.authentication.TokenAuthentication",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "lib.renderer.CustomRenderer",
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
+    "DEFAULT_PAGINATION_CLASSES": [
+        "lib.paginator.CustomPagination"
+    ]
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=15),
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=15),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": True,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
 }
 
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
@@ -160,7 +169,6 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
     "timezone",
 ]
-
 
 JAZZMIN_SETTINGS = {
     "site_title": "Dashboard",
@@ -199,34 +207,4 @@ JAZZMIN_SETTINGS = {
     #################
     # Use modals instead of popups
     "related_modal_active": False,
-}
-
-
-# swagger
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'basic': {
-            'type': 'basic'
-        },
-        'api_key': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization'
-        }
-    },
-    'DOC_EXPANSION': 'None',
-    'FETCH_SCHEMA_WITH_QUERY': True,
-    'LOGOUT_URL': '/admin/logout/',
-    'LOGIN_URL': '/admin/login/',
-    'DEFAULT_MODEL_RENDERING': 'example',
-    'DEFAULT_FIELD_INSPECTORS': [
-        'drf_yasg.inspectors.CamelCaseJSONFilter',
-        'drf_yasg.inspectors.InlineSerializerInspector',
-        'drf_yasg.inspectors.RelatedFieldInspector',
-        'drf_yasg.inspectors.ChoiceFieldInspector',
-        'drf_yasg.inspectors.FileFieldInspector',
-        'drf_yasg.inspectors.DictFieldInspector',
-        'drf_yasg.inspectors.SimpleFieldInspector',
-        'drf_yasg.inspectors.StringDefaultFieldInspector',
-    ],
 }
