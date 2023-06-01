@@ -1,6 +1,6 @@
+import datetime
 import os
 import sys
-import datetime
 from pathlib import Path
 
 import environ
@@ -11,6 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, os.path.join(BASE_DIR, 'app_modules'))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = 'django-insecure-n2@ca6*6y)uu%a$_afsnr382fz)ir0m8#$63u8343+_1f$uxvv'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ----------------------- Global Variables Need To be Set in .env ---------------------
 DEBUG = env.bool('DEBUG', default=True)
@@ -119,8 +121,6 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, "staticfiles"),)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------- REST and CORS Configuration -----------------------
 # Rest framework
