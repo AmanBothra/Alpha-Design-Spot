@@ -5,7 +5,7 @@ from rest_framework import routers
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register('customer-frame', views.CustomerFrameViewSet, basename="customer_frame")
-router.register('user-profile-list', views.UserProfileListApiView, basename='user-profile-list')
+router.register('user-profile', views.UserProfileListApiView, basename='user-profile-list')
 
 urlpatterns = [
     path('', include(router.urls)),
