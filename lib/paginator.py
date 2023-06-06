@@ -2,6 +2,7 @@ from rest_framework import pagination
 
 
 class CustomPagination(pagination.LimitOffsetPagination):
+    print("aman bothra", "--------------------------")
     default_limit = 10
 
     def paginate_queryset(self, queryset, request, view=None):

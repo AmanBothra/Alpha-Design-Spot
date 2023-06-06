@@ -1,12 +1,21 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import permissions
+from rest_framework import permissions, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from rest_framework.generics import ListAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import (
+    SearchFilter,
+    OrderingFilter
+)
 
-from .serializers import CustomerRegistrationSerializer, AdminRegistrationSerializer
-
+from .serializers import (
+    CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
+    UserProfileListSerializer
+)
+from .models import CustomerFrame, User
 
 class RegistrationView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -19,7 +28,7 @@ class RegistrationView(APIView):
         elif user_type == 'admin':
             serializer = AdminRegistrationSerializer(data=request.data)
         else:
-            return Response({'error': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'user_type': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
             serializer.save()
@@ -46,4 +55,24 @@ class LoginView(APIView):
                 }
             )
         else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response('Invalid credentials', status=status.HTTP_401_UNAUTHORIZED)
+        
+
+class CustomerViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = CustomerFrameSerializer
+
+
+class CustomerFrameViewSet(viewsets.ModelViewSet):
+    queryset = CustomerFrame.objects.all().order_by('id')
+    serializer_class = CustomerFrameSerializer
+    
+
+class UserProfileListApiView(viewsets.ModelViewSet):
+    serializer_class = UserProfileListSerializer
+    queryset = User.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
+    http_method_names = ['get']
+    
+        

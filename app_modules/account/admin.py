@@ -58,3 +58,6 @@ class UserAdmin(DefaultUserAdmin):
         ),
     )
     ordering = ("id",)
+    
+    
+admin.site.register(models.CustomerFrame)

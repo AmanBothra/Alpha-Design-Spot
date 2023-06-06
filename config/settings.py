@@ -136,9 +136,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    "DEFAULT_PAGINATION_CLASSES": [
-        "lib.paginator.CustomPagination"
-    ]
+    'DEFAULT_PAGINATION_CLASS': 'lib.paginator.CustomPagination',
 }
 
 SIMPLE_JWT = {
