@@ -73,6 +73,6 @@ class UserProfileListApiView(viewsets.ModelViewSet):
     queryset = User.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
-    http_method_names = ['get']
+    http_method_names = ['get', 'patch']
     
         

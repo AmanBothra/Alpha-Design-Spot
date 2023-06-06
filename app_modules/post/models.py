@@ -9,11 +9,17 @@ class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     sub_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     banner_image = models.ImageField(upload_to='category_banners/', null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class Event(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     event_date = models.DateField(null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class Post(BaseModel):
@@ -21,6 +27,9 @@ class Post(BaseModel):
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     file = models.FileField(upload_to='post/')
     is_active = models.BooleanField(default=True)
+    
+    def __str__(self) -> str:
+        return self.event.name
 
 
 class OtherPost(BaseModel):

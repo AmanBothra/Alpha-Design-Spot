@@ -27,7 +27,7 @@ class UserAdmin(DefaultUserAdmin):
     )
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "whatsapp_number", "user_type")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "whatsapp_number", "user_type", "no_of_post")}),
         (
             "Permissions",
             {
