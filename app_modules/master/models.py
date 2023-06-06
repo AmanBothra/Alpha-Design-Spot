@@ -5,6 +5,7 @@ from lib.models import BaseModel
 
 class Banner(BaseModel):
     image = models.FileField(upload_to="banner/", null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
 
