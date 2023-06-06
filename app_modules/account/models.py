@@ -16,7 +16,7 @@ class User(AbstractUser, BaseModel):
     pincode = models.IntegerField(null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
-    no_of_post = models.IntegerField(default=0)
+    no_of_post = models.IntegerField(default=1)
     is_verify = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
