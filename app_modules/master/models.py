@@ -14,7 +14,7 @@ class BirthdayPost(BaseModel):
 
 
 class SplashScreen(BaseModel):
-    image = models.FileField(upload_to="splash_screen/", null=True, blank=True)
+    file = models.FileField(upload_to="splash_screen/", null=True, blank=True)
 
 
 class Tutorials(BaseModel):
