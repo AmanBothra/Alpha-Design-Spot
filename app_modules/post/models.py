@@ -1,7 +1,7 @@
 from django.db import models
 
 from lib.models import BaseModel
-from account.models import User, CustomerFrame
+from account.models import User, CustomerFrame, CustomerGroup
 from lib.constants import FILE_TYPE
 
 
@@ -26,6 +26,12 @@ class Post(BaseModel):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="post_event")
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     file = models.FileField(upload_to='post/')
+    group = models.ForeignKey(
+        CustomerGroup,
+        on_delete=models.CASCADE,
+        related_name="customer_post_group",
+        null=True, blank=True
+    )
     is_active = models.BooleanField(default=True)
     
     def __str__(self) -> str:

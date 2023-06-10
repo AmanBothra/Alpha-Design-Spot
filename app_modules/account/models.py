@@ -35,12 +35,25 @@ class User(AbstractUser, BaseModel):
             self.set_password(password)
         super(User, self).save(*args, **kwargs)
         
+        
+class CustomerGroup(BaseModel):
+    name = models.CharField(max_length=50)
+    
+    def __str__(self) -> str:
+        return f"{self.name}"
+    
 
 class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
     frame_img = models.ImageField(
         upload_to=rename_file_name('customer_frame/'),
         blank=True, null=True
+    )
+    group = models.ForeignKey(
+        CustomerGroup,
+        on_delete=models.CASCADE,
+        related_name="customer_frame_group",
+        null=True, blank=True    
     )
     
     def __str__(self) -> str:
