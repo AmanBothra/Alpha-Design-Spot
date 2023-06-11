@@ -43,6 +43,12 @@ class OtherPost(BaseModel):
     name = models.CharField(max_length=100)
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     file = models.FileField(upload_to='other_post/')
+    group = models.ForeignKey(
+        CustomerGroup,
+        on_delete=models.CASCADE,
+        related_name="customer_other_post_group",
+        null=True, blank=True
+    )
     is_active = models.BooleanField(default=True)
 
 

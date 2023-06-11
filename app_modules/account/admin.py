@@ -62,3 +62,5 @@ class UserAdmin(DefaultUserAdmin):
     
 admin.site.register(models.CustomerFrame)
 admin.site.register(models.CustomerGroup)
+admin.site.register(models.Plan)
+admin.site.register(models.Subscription)

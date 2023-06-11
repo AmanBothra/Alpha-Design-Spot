@@ -60,7 +60,7 @@ class LoginView(APIView):
         
 
 class CustomerViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.filter(user_type='customer')
     serializer_class = CustomerFrameSerializer
 
 
@@ -71,7 +71,7 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
 
 class UserProfileListApiView(viewsets.ModelViewSet):
     serializer_class = UserProfileListSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.all().exclude(is_superuser=True)
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
     http_method_names = ['get', 'patch']

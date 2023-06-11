@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from lib.constants import USER_TYPE
-from lib.helpers import rename_file_name, get_image_file_extension_validator
+from lib.helpers import rename_file_name
 from .managers import UserManager
 from lib.models import BaseModel
 
@@ -58,3 +58,39 @@ class CustomerFrame(BaseModel):
     
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number}"
+
+
+class Plan(BaseModel):
+    name = models.CharField(max_length=100)
+    duration_in_months = models.IntegerField(default=0)
+    price = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return self.name
+    
+    
+def order_number():
+    last_invoice = Subscription.objects.all().order_by('id').last()
+    if not last_invoice:
+         return '1001'
+    invoice_no = last_invoice.request_id
+    invoice_int = int(invoice_no)
+    new_invoice_int = invoice_int + 1
+    new_invoice_no = str(new_invoice_int)
+    return new_invoice_no
+    
+    
+class Subscription(BaseModel):
+    order_number = models.CharField(max_length=10, default=order_number)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    transaction_number = models.CharField(max_length=50, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    
+    def __str__(self) -> str:
+        return f"{self.order_number} {self.plan.name}"
+    
+    
