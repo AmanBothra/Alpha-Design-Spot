@@ -13,9 +13,9 @@ from rest_framework.filters import (
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
-    UserProfileListSerializer
+    UserProfileListSerializer, CustomerGroupSerializer
 )
-from .models import CustomerFrame, User
+from .models import CustomerFrame, User, CustomerGroup
 
 class RegistrationView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -59,14 +59,11 @@ class LoginView(APIView):
             return Response('Invalid credentials', status=status.HTTP_401_UNAUTHORIZED)
         
 
-class CustomerViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.filter(user_type='customer')
-    serializer_class = CustomerFrameSerializer
-
-
 class CustomerFrameViewSet(viewsets.ModelViewSet):
-    queryset = CustomerFrame.objects.all().order_by('id')
+    queryset = CustomerFrame.objects.all()
     serializer_class = CustomerFrameSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['group__name', 'customer__whatsapp_number']
     
 
 class UserProfileListApiView(viewsets.ModelViewSet):
@@ -76,4 +73,7 @@ class UserProfileListApiView(viewsets.ModelViewSet):
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
     http_method_names = ['get', 'patch']
     
-        
+
+class CustomerGroupViewSet(viewsets.ModelViewSet):
+    queryset = CustomerGroup.objects.all()
+    serializer_class = CustomerGroupSerializer

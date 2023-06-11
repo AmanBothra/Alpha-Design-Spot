@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User, CustomerFrame
+from .models import User, CustomerFrame, CustomerGroup
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
@@ -46,4 +46,10 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 class CustomerFrameSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerFrame
-        fields = ('id', 'customer', 'frame_img')
+        fields = ('id', 'customer', 'frame_img', 'group')
+        
+        
+class CustomerGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerGroup
+        fields = ('id', 'name')
