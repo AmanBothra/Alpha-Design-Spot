@@ -23,6 +23,7 @@ urlpatterns = [
     # API Endpoints
     path("api/auth/", include("account.urls"), name="account"),
     path("api/master/", include("master.urls"), name="master"),
+    path("api/post/", include("post.urls"), name="master"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:  

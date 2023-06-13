@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework import permissions, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import (
     SearchFilter,

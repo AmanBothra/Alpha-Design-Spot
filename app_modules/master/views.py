@@ -1,4 +1,4 @@
-from django_filters.rest_framework import DjangoFilterBackend, BooleanFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 from app_modules.master import serializers
 from app_modules.master.models import (

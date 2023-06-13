@@ -8,4 +8,4 @@ class BaseModelViewSet(mixins.CreateModelMixin,
                        mixins.DestroyModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
-    http_method_names = ('get', 'post', 'put', 'patch', 'options')
+    http_method_names = ('get', 'post', 'put', 'patch', 'delete')
