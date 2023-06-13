@@ -19,10 +19,10 @@ class CustomRenderer(renderers.JSONRenderer):
     def render(self, data, accepted_media_type=None, renderer_context=None):
         status_code = renderer_context['response'].status_code
 
-        api_response_message = None
+        api_response_message = RESPONSE_MESSAGE.get(status_code, None)
 
         if isinstance(data, dict):
-            api_response_message = data.pop('message', None)
+            api_response_message = data.pop('message', api_response_message)
 
         if 'response_data' in data:
             data = data.pop('response_data', None)
@@ -59,5 +59,15 @@ class CustomRenderer(renderers.JSONRenderer):
             elif 'non_field_errors' in data:
                 response['error']['non_field_errors'] = data['non_field_errors']
             else:
-                response['error'] = data
+                response['error'] = self.flatten_field_errors(data)
+
         return JsonResponse(data=response)
+
+    def flatten_field_errors(self, data):
+        field_errors = {}
+        for field, errors in data.items():
+            if isinstance(errors, list) and len(errors) == 1:
+                field_errors[field] = errors[0]
+            else:
+                field_errors[field] = errors
+        return field_errors

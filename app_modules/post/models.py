@@ -21,8 +21,8 @@ class Event(BaseModel):
     
     def __str__(self) -> str:
         return self.name
-
-
+    
+    
 class Post(BaseModel):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="post_event")
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')

@@ -3,7 +3,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
-from app_modules.post.models import Category
+from app_modules.post.models import Category, Event, Post
+from .filters import EventFilter
 
 
 class CategoeryViewset(BaseModelViewSet):
@@ -14,3 +15,17 @@ class CategoeryViewset(BaseModelViewSet):
         'name': ["in", "exact"]
     }
     
+    
+class EventViewset(BaseModelViewSet):
+    queryset = Event.objects.all()
+    serializer_class = serializers.EventSerializer
+    filterset_class = EventFilter
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ('event_date', 'name')
+    
+    
+class PostViewset(BaseModelViewSet):
+    queryset = Post.objects.select_related('event', 'group').all()
+    serializer_class = serializers.PostSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['group__name', 'event__name', 'is_active', 'file_type']
