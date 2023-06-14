@@ -45,15 +45,20 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 
 class CustomerFrameSerializer(serializers.ModelSerializer):
     group_name = serializers.SerializerMethodField()
+    mobile_number = serializers.SerializerMethodField()
+    
     class Meta:
         model = CustomerFrame
-        fields = ('id', 'customer', 'frame_img', 'group', 'group_name')
+        fields = ('id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number')
         
     def get_group_name(self, obj):
         if obj.group:
             return obj.group.name
         else:
             return None
+        
+    def get_mobile_number(self, obj):
+        return obj.customer.whatsapp_number
         
         
 class CustomerGroupSerializer(serializers.ModelSerializer):
