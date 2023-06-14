@@ -35,6 +35,7 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+from rest_framework import exceptions
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -55,7 +56,7 @@ class LoginView(APIView):
                 }
             )
         else:
-            return Response('Invalid credentials', status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed('Invalid email or password')
         
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):

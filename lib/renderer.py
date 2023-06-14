@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from rest_framework import renderers, status
+from rest_framework.response import Response
 
 RESPONSE_MESSAGE = {
     status.HTTP_200_OK: 'Data',
@@ -23,6 +24,15 @@ class CustomRenderer(renderers.JSONRenderer):
 
         if isinstance(data, dict):
             api_response_message = data.pop('message', api_response_message)
+        elif isinstance(data, str):
+            response = {
+                'success': False,
+                'error': {},
+                'message': api_response_message,
+                'status': status_code,
+                'results': data
+            }
+            return JsonResponse(data=response)
 
         if 'response_data' in data:
             data = data.pop('response_data', None)
@@ -55,7 +65,7 @@ class CustomRenderer(renderers.JSONRenderer):
                 'status': status_code
             }
             if 'detail' in data:
-                response['error']['non_field_errors'] = [data['detail']]
+                response['error']['non_field_errors'] = data['detail']
             elif 'non_field_errors' in data:
                 response['error']['non_field_errors'] = data['non_field_errors']
             else:
