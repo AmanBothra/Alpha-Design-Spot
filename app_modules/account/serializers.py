@@ -44,9 +44,16 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 
 
 class CustomerFrameSerializer(serializers.ModelSerializer):
+    group_name = serializers.SerializerMethodField()
     class Meta:
         model = CustomerFrame
-        fields = ('id', 'customer', 'frame_img', 'group')
+        fields = ('id', 'customer', 'frame_img', 'group', 'group_name')
+        
+    def get_group_name(self, obj):
+        if obj.group:
+            return obj.group.name
+        else:
+            return None
         
         
 class CustomerGroupSerializer(serializers.ModelSerializer):
