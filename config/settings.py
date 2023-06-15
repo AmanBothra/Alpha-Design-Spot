@@ -152,9 +152,9 @@ SIMPLE_JWT = {
 
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = (
+CORS_ORIGIN_WHITELIST = [
     FRONT_END_DOMAIN
-)
+]
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
