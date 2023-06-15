@@ -33,7 +33,7 @@ class Post(BaseModel):
         related_name="customer_post_group",
         null=True, blank=True
     )
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     
     def __str__(self) -> str:
         return self.event.name
@@ -50,7 +50,10 @@ class OtherPost(BaseModel):
         related_name="customer_other_post_group",
         null=True, blank=True
     )
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class DownloadPost(BaseModel):
