@@ -23,6 +23,22 @@ class EventSerializer(serializers.ModelSerializer):
         
 
 class PostSerializer(serializers.ModelSerializer):
+    group_name = serializers.SerializerMethodField()
+    event_name = serializers.SerializerMethodField()
+    
+    
     class Meta:
         model = Post
-        fields = ['id', 'event', 'file_type', 'file', 'group', 'is_active', 'added_on']
+        fields = ['id', 'event', 'file_type', 'file', 'group', 'is_active', 'added_on',
+                  'group_name', 'event_name'
+        ]
+        
+        
+    def get_group_name(self, obj):
+        if obj.group:
+            return obj.group.name
+        else:
+            return None
+        
+    def get_event_name(self, obj):
+        return obj.event.name
