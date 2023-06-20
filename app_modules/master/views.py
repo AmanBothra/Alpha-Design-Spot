@@ -20,7 +20,7 @@ class BirthdayPostViewSet(BaseModelViewSet):
 
 
 class SplashScreenViewSet(BaseModelViewSet):
-    serializer_class = serializers.SplashScreen
+    serializer_class = serializers.SplashScreenSerializer
     queryset = SplashScreen.objects.all()
 
 
