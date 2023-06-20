@@ -4,6 +4,7 @@ from django.utils.deconstruct import deconstructible
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 
+
 @deconstructible
 class rename_file_name(object):
 

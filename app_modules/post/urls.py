@@ -5,9 +5,11 @@ from rest_framework import routers
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register('category', views.CategoeryViewset, basename='category')
+router.register('sub-categories', views.SubcategoryViewSet, basename='sub-category')
 router.register('event', views.EventViewset, basename='event')
 router.register('post', views.PostViewset, basename='post')
 router.register('other-post', views.OtherPostViewset, basename='other-post')
+router.register('customer-post-frame', views.CustomerPostFrameMappingViewSet, basename='customer-post-frame')
 
 urlpatterns = [
     path('', include(router.urls)),

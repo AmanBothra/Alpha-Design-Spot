@@ -45,7 +45,7 @@ class CustomerGroup(BaseModel):
 
 class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
-    frame_img = models.ImageField(
+    frame_img = models.FileField(
         upload_to=rename_file_name('customer_frame/'),
         blank=True, null=True
     )
