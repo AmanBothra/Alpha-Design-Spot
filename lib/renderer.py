@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from rest_framework import renderers, status
-from rest_framework.response import Response
 
 RESPONSE_MESSAGE = {
     status.HTTP_200_OK: 'Data',
@@ -34,50 +33,68 @@ class CustomRenderer(renderers.JSONRenderer):
             }
             return JsonResponse(data=response)
 
-        if 'response_data' in data:
-            data = data.pop('response_data', None)
-            data.pop('response_message', None)
-
-        if status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED, status.HTTP_204_NO_CONTENT]:
-            response = {
-                'success': True,
-                'message': api_response_message,
-                'status': status_code,
-            }
-            if 'additional_info' in data:
-                response['additional_info'] = data.get('additional_info')
-
-            if data is not None:
-                if 'results' in data:
-                    response.update({
-                        'count': data['count'],
-                        'next': data['next'],
-                        'previous': data['previous'],
-                        'results': data['results']
-                    })
-                else:
-                    response.update({'results': data})
-        else:
-            response = {
-                'success': False,
-                'error': {},
-                'message': api_response_message,
-                'status': status_code
-            }
-            if 'detail' in data:
-                response['error']['non_field_errors'] = data['detail']
-            elif 'non_field_errors' in data:
-                response['error']['non_field_errors'] = data['non_field_errors']
+        if renderer_context['request'].method == 'DELETE':
+            if status_code == status.HTTP_204_NO_CONTENT:
+                response = {
+                    'success': True,
+                    'message': 'Data deleted successfully',
+                    'status': status.HTTP_200_OK,
+                }
             else:
-                response['error'] = self.flatten_field_errors(data)
+                response = {
+                    'success': False,
+                    'error': {},
+                    'message': api_response_message,
+                    'status': status_code
+                }
+                if 'detail' in data:
+                    response['error']['non_field_errors'] = data['detail']
+                elif 'non_field_errors' in data:
+                    response['error']['non_field_errors'] = data['non_field_errors']
+                else:
+                    response['error'] = self.flatten_field_errors(data)
+        else:
+            if status_code in [status.HTTP_200_OK, status.HTTP_201_CREATED, status.HTTP_204_NO_CONTENT]:
+                response = {
+                    'success': True,
+                    'message': api_response_message,
+                    'status': status_code,
+                }
+                if 'additional_info' in data:
+                    response['additional_info'] = data.get('additional_info')
+
+                if data is not None:
+                    if 'results' in data:
+                        response.update({
+                            'count': data['count'],
+                            'next': data['next'],
+                            'previous': data['previous'],
+                            'results': data['results']
+                        })
+                    else:
+                        response.update({'results': data})
+            else:
+                response = {
+                    'success': False,
+                    'error': {},
+                    'message': api_response_message,
+                    'status': status_code
+                }
+                if 'detail' in data:
+                    response['error']['non_field_errors'] = data['detail']
+                elif 'non_field_errors' in data:
+                    response['error']['non_field_errors'] = data['non_field_errors']
+                else:
+                    response['error'] = self.flatten_field_errors(data)
 
         return JsonResponse(data=response)
 
     def flatten_field_errors(self, data):
         field_errors = {}
-        for field, errors in data.items():
-            if isinstance(errors, list) and len(errors) == 1:
-                field_errors[field] = errors[0]
-            else:
-                field_errors[field] = errors
+        if data is not None:
+            for field, errors in data.items():
+                if isinstance(errors, list) and len(errors) == 1:
+                    field_errors[field] = errors[0]
+                else:
+                    field_errors[field] = errors
         return field_errors

@@ -52,7 +52,8 @@ class LoginView(APIView):
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
                     'id': user.id,
-                    'is_verify': user.is_verify
+                    'is_verify': user.is_verify,
+                    'is_customer': bool(user.no_of_post <=1)
                 }
             )
         else:

@@ -97,3 +97,23 @@ class CustomerPostFrameMapping(BaseModel):
     def __str__(self) -> str:
         return self.customer.whatsapp_number
 
+
+
+class CustomerOtherPostFrameMapping(BaseModel):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="other_post_frame_mapping")
+    other_post = models.ForeignKey(
+        OtherPost,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="other_post_mapping"
+    )
+    customer_frame = models.ForeignKey(
+        CustomerFrame,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="customer_other_post_frame_mapping"
+    )
+    is_downloaded = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return self.customer.whatsapp_number

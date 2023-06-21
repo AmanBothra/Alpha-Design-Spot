@@ -1,3 +1,4 @@
+from datetime import date
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
@@ -22,12 +23,23 @@ class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.SubcategorySerializer
     
 class EventViewset(BaseModelViewSet):
-    queryset = Event.objects.all()
+    # queryset = Event.objects.all()
     serializer_class = serializers.EventSerializer
     filterset_class = EventFilter
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ('event_date', 'name')
     
+    def get_queryset(self):
+        date_type = self.request.GET.get('date_type')
+        today = date.today()
+        queryset = Event.objects.all()
+        
+        if date_type == "today":
+            queryset = queryset.filter(event_date=today)
+        
+        return queryset
+    
+            
     
 class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all()
@@ -40,8 +52,6 @@ class PostViewset(BaseModelViewSet):
         context["user"] = self.request.user
         return context
     
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
     
 
 class OtherPostViewset(BaseModelViewSet):
