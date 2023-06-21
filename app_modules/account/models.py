@@ -58,7 +58,14 @@ class CustomerFrame(BaseModel):
     
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number}"
-
+    
+    
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self) -> str:
+        return self.name
+    
 
 class Plan(BaseModel):
     name = models.CharField(max_length=100)
@@ -84,6 +91,7 @@ class Subscription(BaseModel):
     order_number = models.CharField(max_length=10, default=order_number)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='subscription_payment_methods')
     start_date = models.DateField()
     end_date = models.DateField()
     transaction_number = models.CharField(max_length=50, null=True, blank=True)

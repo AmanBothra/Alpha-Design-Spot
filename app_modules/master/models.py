@@ -1,6 +1,7 @@
 from django.db import models
 
 from lib.models import BaseModel
+from account.models import User
 
 
 class Banner(BaseModel):
@@ -41,9 +42,12 @@ class TermsAndCondition(BaseModel):
 
 
 class Feedback(BaseModel):
-    name = models.CharField(max_length=50)
-    number = models.CharField(max_length=15)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     feedback = models.TextField()
+    
+    def __str__(self) -> str:
+        return self.customer.whatsapp_number
+    
 
 
 

@@ -47,5 +47,9 @@ class TermsAndConditionViewSet(BaseModelViewSet):
 class FeedbackViewSet(BaseModelViewSet):
     serializer_class = serializers.FeedbackSerializer
     queryset = Feedback.objects.all()
+    http_method_names = ['get', 'post']
+    
+    def perform_create(self, serializer):
+        serializer.save(customer=self.request.user)
 
-
+    

@@ -50,7 +50,14 @@ class TermsAndConditionSerializer(serializers.ModelSerializer):
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
+    customer_detail = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Feedback
-        fields = "__all__"
+        fields = ['id', 'feedback', 'customer_detail']
+        
+    def get_customer_detail(self, obj):
+        return {
+            "number": obj.customer.whatsapp_number,
+            "name": f"{obj.customer.first_name} {obj.customer.last_name}",
+        }
 
