@@ -42,7 +42,7 @@ class EventViewset(BaseModelViewSet):
         date_type = self.request.GET.get('date_type')
         today = date.today()
         tomorrow = today + timedelta(days=1)
-        queryset = Event.objects.all()
+        queryset = Event.objects.all().order_by('-event_date')
 
         if date_type == "today":
             queryset = queryset.filter(event_date=today)
@@ -56,7 +56,7 @@ class EventViewset(BaseModelViewSet):
             
     
 class PostViewset(BaseModelViewSet):
-    # queryset = Post.objects.select_related('event', 'group').all()
+    queryset = Post.objects.select_related('event', 'group').all()
     serializer_class = serializers.PostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['group__name', 'event__name', 'is_active', 'file_type']
@@ -64,17 +64,7 @@ class PostViewset(BaseModelViewSet):
     def get_serializer_context(self):
         context = super(PostViewset, self).get_serializer_context()
         return context
-    
-    def get_queryset(self):
-        queryset = Post.objects.select_related('event', 'group').all()
-        customer = self.request.user
-        event_date = self.request.GET.get('event_date')
-        if event_date:
-            queryset = Post.objects.select_related('event', 'group').filter(event__event_date=event_date)
-            
-        return queryset
-    
-    
+     
 
 class OtherPostViewset(BaseModelViewSet):
     queryset = OtherPost.objects.select_related('category', 'group').all()
