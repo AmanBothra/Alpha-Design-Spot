@@ -12,11 +12,11 @@ class Banner(BaseModel):
 
 class BirthdayPost(BaseModel):
     image = models.FileField(upload_to="birthday_post/", null=True, blank=True)
-
+    
 
 class SplashScreen(BaseModel):
     file = models.FileField(upload_to="splash_screen/", null=True, blank=True)
-
+    
 
 class Tutorials(BaseModel):
     name = models.CharField(max_length=100, null=True, blank=True)

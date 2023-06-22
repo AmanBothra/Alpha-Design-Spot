@@ -1,4 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.response import Response
+from rest_framework import status
 
 from app_modules.master import serializers
 from app_modules.master.models import (
@@ -17,11 +19,31 @@ class BannerViewSet(BaseModelViewSet):
 class BirthdayPostViewSet(BaseModelViewSet):
     serializer_class = serializers.BirthdayPostSerializer
     queryset = BirthdayPost.objects.all()
+    http_method_names = ['get', 'post', 'patch']
+    
+    def create(self, request, *args, **kwargs):
+        # Check if an object already exists
+        if BirthdayPost.objects.exists():
+            return Response(
+                {'image': 'A birthday post already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
 
 
 class SplashScreenViewSet(BaseModelViewSet):
     serializer_class = serializers.SplashScreenSerializer
     queryset = SplashScreen.objects.all()
+    http_method_names = ['get', 'post', 'patch']
+    
+    def create(self, request, *args, **kwargs):
+        # Check if an object already exists
+        if SplashScreen.objects.exists():
+            return Response(
+                {'file': 'A splash screen already exists.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
 
 
 class TutorialsViewSet(BaseModelViewSet):

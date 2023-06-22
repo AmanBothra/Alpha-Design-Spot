@@ -2,6 +2,8 @@ from datetime import date, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
@@ -16,6 +18,13 @@ class CategoeryViewset(BaseModelViewSet):
     filterset_fields = {
         'name': ["in", "exact"]
     }
+    
+    @action(detail=True, methods=['get'])
+    def subcategories(self, request, pk=None):
+        category = self.get_object()
+        subcategories = Category.objects.filter(sub_category=category)
+        serializer = self.get_serializer(subcategories, many=True)
+        return Response(serializer.data)
     
     
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
