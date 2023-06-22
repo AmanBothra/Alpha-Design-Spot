@@ -51,6 +51,17 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         model = CustomerFrame
         fields = ('id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number')
         
+    def create(self, validated_data):
+        customer = validated_data.get('customer')
+        
+         # Check if the customer has reached the maximum number of posts
+        no_of_post = customer.no_of_post
+        existing_frame_count = CustomerFrame.objects.filter(customer=customer).count()
+        if existing_frame_count >= no_of_post:
+            raise serializers.ValidationError({"customer": f"The customer has already reached the maximum number of posts {no_of_post}."})
+        
+        return super().create(validated_data)
+        
     def get_group_name(self, obj):
         if obj.group:
             return obj.group.name

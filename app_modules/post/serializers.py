@@ -89,21 +89,80 @@ class OtherPostSerializer(serializers.ModelSerializer):
         return obj.category.name
     
     
+# class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
+#     customer_frame_image = serializers.SerializerMethodField(read_only=True)
+#     post_base_image = serializers.SerializerMethodField(read_only=True)
+#     class Meta:
+#         model = CustomerPostFrameMapping
+#         fields = [
+#             'id', 'customer', 'post', 'customer_frame', 'is_downloaded', 'customer_frame_image',
+#             'post_base_image'
+#         ]
+        
+    
+#     def get_customer_frame_image(self, obj):
+#         request = self.context.get('request')
+#         customer_group = obj.post.group.name
+#         data = CustomerFrame.objects.filter(customer=obj.customer, group__name=customer_group).select_related('group')
+#         urls = []
+#         for image in data:
+#             urls.append(request.build_absolute_uri(image.frame_img.url))
+#         return urls
+    
+#     def get_post_base_image(self, obj):
+#         request = self.context.get('request')
+#         customer_group = obj.post.group.name
+#         event_date = request.query_params.get("event_date")
+#         data = Post.objects.filter(event__event_date=event_date, group__name=customer_group).select_related('event', 'group')
+#         urls = []
+#         for image in data:
+#             urls.append(request.build_absolute_uri(image.file.url))
+#         return urls
+                
+
+        
 class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
-    customer_frame_image = serializers.SerializerMethodField(read_only=True)
+    data = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = CustomerPostFrameMapping
-        fields = ['id', 'customer', 'post', 'customer_frame', 'is_downloaded', 'customer_frame_image']
-        
+        fields = [
+            'id', 'customer', 'post', 'customer_frame', 'is_downloaded', 'data'
+        ]
     
     def get_customer_frame_image(self, obj):
         request = self.context.get('request')
-        data = CustomerFrame.objects.filter(customer=obj.customer)
-        urls = []
-        for image in data:
-            urls.append(request.build_absolute_uri(image.frame_img.url))
+        customer_group = obj.post.group.name
+        data = CustomerFrame.objects.filter(customer=obj.customer, group__name=customer_group).select_related('group')
+        urls = [request.build_absolute_uri(image.frame_img.url) for image in data]
         return urls
-
+    
+    def get_post_base_image(self, obj):
+        request = self.context.get('request')
+        customer_group = obj.post.group.name
+        event_date = request.query_params.get("event_date")
+        data = Post.objects.filter(event__event_date=event_date, group__name=customer_group).select_related('event', 'group')
+        urls = [request.build_absolute_uri(image.file.url) for image in data]
+        return urls
+    
+    def get_data(self, obj):
+        customer_frame_image = self.get_customer_frame_image(obj)
+        post_base_image = self.get_post_base_image(obj)
         
-
+        # Check if there is only one frame image and one base image
+        if len(customer_frame_image) == 1 and len(post_base_image) == 1:
+            return {
+                'frame_img': customer_frame_image[0],
+                'base_img': post_base_image[0]
+            }
+        
+        # Return multiple data if there are multiple frame images or base images
+        data = []
+        for frame_img, base_img in zip(customer_frame_image, post_base_image):
+            data.append({
+                'frame_img': frame_img,
+                'base_img': base_img
+            })
+        
+        return data
         

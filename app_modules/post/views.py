@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
@@ -32,11 +32,16 @@ class EventViewset(BaseModelViewSet):
     def get_queryset(self):
         date_type = self.request.GET.get('date_type')
         today = date.today()
+        tomorrow = today + timedelta(days=1)
         queryset = Event.objects.all()
-        
+
         if date_type == "today":
             queryset = queryset.filter(event_date=today)
-        
+        elif date_type == "tomorrow":
+            queryset = queryset.filter(event_date=tomorrow)
+        elif date_type == "upcoming":
+            queryset = queryset.filter(event_date__gte=tomorrow)
+
         return queryset
     
             
