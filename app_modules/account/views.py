@@ -1,14 +1,10 @@
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, exceptions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import (
-    SearchFilter,
-    OrderingFilter
-)
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
@@ -35,7 +31,6 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-from rest_framework import exceptions
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -65,6 +60,7 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['group__name', 'customer__whatsapp_number']
+    filterset_fields = ['group__name']
     
 
 class UserProfileListApiView(viewsets.ModelViewSet):
