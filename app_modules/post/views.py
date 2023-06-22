@@ -4,6 +4,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
@@ -64,6 +65,17 @@ class PostViewset(BaseModelViewSet):
     def get_serializer_context(self):
         context = super(PostViewset, self).get_serializer_context()
         return context
+    
+    def create(self, request, *args, **kwargs):
+        event_id = request.data.get('event')
+        group_id = request.data.get('group')
+
+        if event_id and group_id:
+            existing_post = Post.objects.filter(event_id=event_id, group_id=group_id).exists()
+            if existing_post:
+                raise ValidationError({"event":"A post with the same event and group already exists."})
+
+        return super().create(request, *args, **kwargs)
      
 
 class OtherPostViewset(BaseModelViewSet):
