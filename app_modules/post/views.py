@@ -101,9 +101,9 @@ class CustomerPostFrameMappingViewSet(BaseModelViewSet):
     
     def get_queryset(self):
         customer = self.request.user
-        event_date = self.request.query_params.get('event_date')
+        event_id = self.request.query_params.get('event_id')
         queryset = self.queryset.select_related('customer', 'post', 'customer_frame').filter(
-            customer=customer, post__event__event_date=event_date)
+            customer=customer, post__event=event_id)
         
         return queryset
     
