@@ -5,16 +5,34 @@ from account.models import User, CustomerFrame
 from .models import Category, Post, Event, OtherPost, CustomerPostFrameMapping
 from account.serializers import CustomerFrameSerializer
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'banner_image', 'sub_category', 'is_active']
-        
- 
+
+
 class SubcategorySerializer(serializers.ModelSerializer):
+    banner_image = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'banner_image']
+
+    def get_banner_image(self, obj):
+        request = self.context.get('request')
+        if obj.banner_image:
+            return request.build_absolute_uri(obj.banner_image.url)
+        return None
+        
+
+class CategorySerializer(serializers.ModelSerializer):
+    sub_categories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'banner_image', 'sub_categories', 'is_active']
+
+    def get_sub_categories(self, obj):
+        sub_categories = Category.objects.filter(sub_category=obj)
+        serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
+        return serializer.data
+
         
                
 class EventSerializer(serializers.ModelSerializer):
