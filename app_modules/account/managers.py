@@ -14,3 +14,17 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
+
+
+
+    @staticmethod
+    def lowercase_email(email):
+        """
+        lowercase the email address so that when users log in we can match lowercase login details
+        """
+        email = email or ""
+        try:
+            email = email.strip().lower()
+        except ValueError:
+            pass
+        return email
