@@ -1,9 +1,8 @@
 from rest_framework import serializers
 from django.utils import timezone
 
-from account.models import User, CustomerFrame
-from .models import Category, Post, Event, OtherPost, CustomerPostFrameMapping
-from account.serializers import CustomerFrameSerializer
+from account.models import CustomerFrame
+from .models import Category, Post, Event, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
 
 
 
@@ -122,4 +121,12 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     
     
 
-        
+class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
+    post_image = serializers.FileField(source="other_post.file", read_only=True)
+    frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
+    
+    class Meta:
+        model = CustomerOtherPostFrameMapping
+        fields = [
+            'id', 'customer', 'other_post', 'customer_frame', 'is_downloaded', 'post_image', 'frame_image'
+        ]

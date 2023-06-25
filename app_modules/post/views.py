@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
-from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping
+from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
 from .filters import EventFilter
 
 
@@ -61,7 +61,6 @@ class EventViewset(BaseModelViewSet):
         return queryset
     
             
-    
 class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all()
     serializer_class = serializers.PostSerializer
@@ -96,6 +95,7 @@ class CustomerPostFrameMappingViewSet(BaseModelViewSet):
     serializer_class = serializers.CustomerPostFrameMappingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['post__event__event_date']
+    filterset_fields = ['is_downloaded']
     http_method_names = ['get', 'patch']
     
     
@@ -108,8 +108,37 @@ class CustomerPostFrameMappingViewSet(BaseModelViewSet):
     def get_queryset(self):
         customer = self.request.user
         event_id = self.request.query_params.get('event_id')
-        queryset = self.queryset.select_related('customer', 'post', 'customer_frame').filter(
-            customer=customer, post__event=event_id)
         
+        queryset = self.queryset.prefetch_related('customer', 'post', 'customer_frame')
+        if event_id:
+            queryset = queryset.filter(customer=customer, post__event=event_id)
+            
+        return queryset
+
+    
+
+class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
+    queryset = CustomerOtherPostFrameMapping.objects
+    serializer_class = serializers.CustomerOtherPostFrameMappingSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['other_post__name']
+    filterset_fields = ['is_downloaded']
+    http_method_names = ['get', 'patch']
+    
+    
+    def get_serializer_context(self):
+        context = super(CustomerOtherPostFrameMappingViewSet, self).get_serializer_context()
+        context["user"] = self.request.user
+        return context
+    
+    
+    def get_queryset(self):
+        customer = self.request.user
+        categoery_id = self.request.query_params.get('categoery_id')
+        
+        queryset = self.queryset.prefetch_related('customer', 'other_post', 'customer_frame')
+        if categoery_id:
+            queryset = queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
+            
         return queryset
     
