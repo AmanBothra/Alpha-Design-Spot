@@ -20,18 +20,12 @@ class CategoeryViewset(BaseModelViewSet):
         'name': ["in", "exact"]
     }
     
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.filter_queryset(self.get_queryset())
-    #     serializer = self.get_serializer(queryset, many=True)
-
-    #     # Retrieve all sub-categories and add them to the response
-    #     all_sub_categories = Category.objects.filter(sub_category__isnull=False)
-    #     sub_category_serializer = serializers.CategorySerializer(all_sub_categories, many=True)
-    #     response_data = {
-    #         'categories': serializer.data,
-    #         'all_sub_categories': sub_category_serializer.data
-    #     }
-    #     return Response(response_data)
+    @action(detail=True, methods=['get'])
+    def subcategories(self, request, pk=None):
+        category = self.get_object()
+        subcategories = Category.objects.filter(sub_category=category)
+        serializer = self.get_serializer(subcategories, many=True)
+        return Response(serializer.data)
     
     
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
