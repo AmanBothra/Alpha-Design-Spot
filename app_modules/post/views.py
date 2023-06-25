@@ -143,8 +143,16 @@ class DownloadedDataViewSet(BaseModelViewSet):
     def get_queryset(self):
         # Filter the data based on is_downloaded=True for both models
         customer = self.request.user
-        customer_post_frame_data = CustomerPostFrameMapping.objects.filter(is_downloaded=True, customer=customer)
-        customer_other_post_frame_data = CustomerOtherPostFrameMapping.objects.filter(is_downloaded=True, customer=customer)
+        file_type = self.request.query_params.get('file_type')
+        
+        customer_post_frame_data = CustomerPostFrameMapping.objects.prefetch_related(
+            'customer', 'post', 'customer_frame').filter(
+            is_downloaded=True, customer=customer, post__file_type=file_type
+        )
+        customer_other_post_frame_data = CustomerOtherPostFrameMapping.objects.prefetch_related(
+            'customer', 'other_post', 'customer_frame').filter(
+            is_downloaded=True, customer=customer, other_post__file_type=file_type
+        )
 
         # Combine the filtered data from both models
         merged_queryset = customer_post_frame_data.union(customer_other_post_frame_data)
