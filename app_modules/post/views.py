@@ -135,4 +135,28 @@ class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
             queryset = queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
             
         return queryset
-    
+
+
+class DownloadedDataViewSet(BaseModelViewSet):
+    pagination_class = None
+
+    def get_queryset(self):
+        # Filter the data based on is_downloaded=True for both models
+        customer = self.request.user
+        customer_post_frame_data = CustomerPostFrameMapping.objects.filter(is_downloaded=True, customer=customer)
+        customer_other_post_frame_data = CustomerOtherPostFrameMapping.objects.filter(is_downloaded=True, customer=customer)
+
+        # Combine the filtered data from both models
+        merged_queryset = customer_post_frame_data.union(customer_other_post_frame_data)
+
+        return merged_queryset
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            queryset = self.get_queryset()
+            if queryset.model == CustomerPostFrameMapping:
+                return serializers.CustomerPostFrameMappingSerializer
+            elif queryset.model == CustomerOtherPostFrameMapping:
+                return serializers.CustomerOtherPostFrameMappingSerializer
+
+        return super().get_serializer_class()
