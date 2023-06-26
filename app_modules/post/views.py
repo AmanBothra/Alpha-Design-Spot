@@ -20,6 +20,17 @@ class CategoeryViewset(BaseModelViewSet):
         'name': ["in", "exact"]
     }
     
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        exclude_main_categories = self.request.query_params.get('exclude_main_categories', True) # set by default true
+
+        if exclude_main_categories:
+            queryset = queryset.exclude(sub_category__isnull=False)
+
+        return queryset
+    
+    
+    
     @action(detail=True, methods=['get'])
     def subcategories(self, request, pk=None):
         category = self.get_object()

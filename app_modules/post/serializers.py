@@ -28,9 +28,11 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'banner_image', 'sub_categories', 'is_active']
 
     def get_sub_categories(self, obj):
-        sub_categories = Category.objects.filter(sub_category=obj)
-        serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
-        return serializer.data
+        if not self.context.get('exclude_main_categories'):
+            sub_categories = Category.objects.filter(sub_category=obj)
+            serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
+            return serializer.data
+        return []
 
         
                
