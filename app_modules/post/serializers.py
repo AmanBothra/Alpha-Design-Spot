@@ -54,7 +54,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'event', 'file_type', 'file', 'group', 'is_active', 'added_on',
+        fields = ['id', 'event', 'file_type', 'file', 'group', 'thumbnail', 'is_active', 'added_on',
                   'group_name', 'customer_details', 'event_details', 'is_active']
 
     def get_customer_details(self, obj):
@@ -91,7 +91,7 @@ class OtherPostSerializer(serializers.ModelSerializer):
     class Meta:
         model  = OtherPost
         fields = ['id', 'category', 'category_name', 'name', 'file_type', 'file', 'group', 
-            'group_name', 'is_active'
+            'group_name', 'is_active', "thumbnail"
         ]
         
     def get_group_name(self, obj):

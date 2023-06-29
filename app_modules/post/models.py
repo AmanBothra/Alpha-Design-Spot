@@ -35,6 +35,7 @@ class Post(BaseModel):
         related_name="customer_post_group",
         null=True, blank=True
     )
+    thumbnail = models.FileField(upload_to=rename_file_name('post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
     
     def __str__(self) -> str:
@@ -52,6 +53,7 @@ class OtherPost(BaseModel):
         related_name="customer_other_post_group",
         null=True, blank=True
     )
+    thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
     
     def __str__(self) -> str:
