@@ -37,6 +37,7 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 LOCAL_APPS = [
@@ -205,4 +206,38 @@ JAZZMIN_SETTINGS = {
     #################
     # Use modals instead of popups
     "related_modal_active": False,
+}
+
+
+# swagger
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'basic': {
+            'type': 'basic'
+        },
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+    'DOC_EXPANSION': 'None',
+    'FETCH_SCHEMA_WITH_QUERY': True,
+    'LOGOUT_URL': '/admin/logout/',
+    'LOGIN_URL': '/admin/login/',
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'DEFAULT_FIELD_INSPECTORS': [
+        'drf_yasg.inspectors.CamelCaseJSONFilter',
+        'drf_yasg.inspectors.InlineSerializerInspector',
+        'drf_yasg.inspectors.RelatedFieldInspector',
+        'drf_yasg.inspectors.ChoiceFieldInspector',
+        'drf_yasg.inspectors.FileFieldInspector',
+        'drf_yasg.inspectors.DictFieldInspector',
+        'drf_yasg.inspectors.SimpleFieldInspector',
+        'drf_yasg.inspectors.StringDefaultFieldInspector',
+    ],
 }
