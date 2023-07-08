@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.generics import ListAPIView
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
@@ -74,3 +75,16 @@ class UserProfileListApiView(viewsets.ModelViewSet):
 class CustomerGroupViewSet(viewsets.ModelViewSet):
     queryset = CustomerGroup.objects.all()
     serializer_class = CustomerGroupSerializer
+    
+
+class CustomerGroupListApiView(ListAPIView):
+    pagination_class = None
+    queryset  = CustomerGroup.objects.all()
+    serializer_class = CustomerGroupSerializer
+    
+    
+class CustomerFrameListApiView(ListAPIView):
+    pagination_class = None
+    queryset  = CustomerFrame.objects.select_related('customer', 'group').all()
+    serializer_class = CustomerFrameSerializer
+    

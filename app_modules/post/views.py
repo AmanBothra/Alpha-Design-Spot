@@ -5,6 +5,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListAPIView
+
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
@@ -42,6 +44,7 @@ class CategoeryViewset(BaseModelViewSet):
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.filter(sub_category__isnull=False)
     serializer_class = serializers.SubcategorySerializer
+    pagination_class = None
     
 class EventViewset(BaseModelViewSet):
     # queryset = Event.objects.all()
@@ -179,3 +182,16 @@ class DownloadedDataViewSet(BaseModelViewSet):
                 return serializers.CustomerOtherPostFrameMappingSerializer
 
         return super().get_serializer_class()
+    
+    
+class EventListApiView(ListAPIView):
+    pagination_class = None
+    serializer_class = serializers.EventSerializer
+    queryset = Event.objects.all()
+    
+
+class CategoryListApiView(ListAPIView):
+    pagination_class = None
+    serializer_class = serializers.CategorySerializer
+    queryset = Category.objects.select_related('sub_category').all()
+

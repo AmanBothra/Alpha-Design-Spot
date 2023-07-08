@@ -16,4 +16,6 @@ router.register('my-post', views.DownloadedDataViewSet, basename='my-post')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('event-list', views.EventListApiView.as_view(), name='event-list'),
+    path('category-list', views.CategoryListApiView.as_view(), name='category-list'),
 ]
