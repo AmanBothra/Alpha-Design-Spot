@@ -98,3 +98,4 @@ class CustomRenderer(renderers.JSONRenderer):
                 else:
                     field_errors[field] = errors
         return field_errors
+
