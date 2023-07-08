@@ -76,3 +76,10 @@ class CustomerGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerGroup
         fields = ('id', 'name')
+        
+        
+class CuatomerListSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ('id', 'name')

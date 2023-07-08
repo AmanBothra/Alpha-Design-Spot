@@ -13,5 +13,6 @@ urlpatterns = [
     path('register', views.RegistrationView.as_view(), name='register'),
     path('login', views.LoginView.as_view(), name='register'),
     path('customer-group-list', views.CustomerGroupListApiView.as_view(), name='customer-group-list'),
-    path('customer-frame-list', views.CustomerFrameListApiView.as_view(), name='customer-frame-list')
+    path('customer-frame-list', views.CustomerFrameListApiView.as_view(), name='customer-frame-list'),
+    path('customer-list', views.CustomerListApiView.as_view(), name='customer-list'),
 ]

@@ -9,7 +9,7 @@ from rest_framework.generics import ListAPIView
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
-    UserProfileListSerializer, CustomerGroupSerializer
+    UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer
 )
 from .models import CustomerFrame, User, CustomerGroup
 
@@ -88,3 +88,8 @@ class CustomerFrameListApiView(ListAPIView):
     queryset  = CustomerFrame.objects.select_related('customer', 'group').all()
     serializer_class = CustomerFrameSerializer
     
+    
+class CustomerListApiView(ListAPIView):
+    pagination_class = None
+    queryset  = User.objects.all()
+    serializer_class = CuatomerListSerializer
