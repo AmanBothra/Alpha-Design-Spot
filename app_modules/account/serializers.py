@@ -82,4 +82,4 @@ class CuatomerListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'name')
+        fields = ('id', 'whatsapp_number')
