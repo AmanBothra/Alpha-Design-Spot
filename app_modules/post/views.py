@@ -1,17 +1,25 @@
+import ffmpeg
+import urllib.request
+import os
+import uuid
 from datetime import date, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from app_modules.post import serializers
 from lib.viewsets import BaseModelViewSet
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
 from .filters import EventFilter
+from .task import process_video
 
 
 class CategoeryViewset(BaseModelViewSet):
@@ -65,7 +73,7 @@ class EventViewset(BaseModelViewSet):
             queryset = queryset.filter(event_date=tomorrow)
         elif date_type == "upcoming":
             queryset = queryset.filter(event_date__gte=tomorrow)
-
+            
         return queryset
     
             
@@ -122,8 +130,61 @@ class CustomerPostFrameMappingViewSet(BaseModelViewSet):
             queryset = queryset.filter(customer=customer, post__event=event_id)
             
         return queryset
-
     
+
+fs = FileSystemStorage(location=settings.MEDIA_ROOT)
+
+@api_view(['POST'])
+def generate_output_video(request):
+    # Get the video URL and frame image URL from the request data
+    video_url = request.query_params.get("video_url")
+    frame_image_url = request.query_params.get("frame_image_url")
+
+    # Create the 'video-with-frame' directory inside MEDIA_ROOT if it doesn't exist
+    media_directory = os.path.join(settings.MEDIA_ROOT, 'video-with-frame')
+    os.makedirs(media_directory, exist_ok=True)
+
+    # Output video file name
+    # Generate a unique ID using UUID
+    unique_id = str(uuid.uuid4())
+    output_video = f"output_{unique_id}.mp4"
+
+    # Download the video file
+    urllib.request.urlretrieve(video_url, "input.mp4")
+
+    # Download the frame image
+    urllib.request.urlretrieve(frame_image_url, "frame.png")
+
+    # Get the video dimensions
+    video_info = ffmpeg.probe("input.mp4")
+    video_width = int(video_info['streams'][0]['width'])
+    video_height = int(video_info['streams'][0]['height'])
+
+    # Get the frame image dimensions
+    frame_info = ffmpeg.probe("frame.png")
+    frame_width = int(frame_info['streams'][0]['width'])
+    frame_height = int(frame_info['streams'][0]['height'])
+
+    # Calculate the scale factor based on the video dimensions
+    scale_factor = min(video_width / frame_width, video_height / frame_height)
+
+    # Calculate the frame position
+    frame_x = int((video_width - frame_width * scale_factor) / 2)
+    frame_y = int((video_height - frame_height * scale_factor) / 2)
+
+    # Add frame to the video using ffmpeg
+    ffmpeg.input("input.mp4").output(os.path.join(media_directory, output_video),
+                                     vf="movie={},scale={}*iw:{}*ih,format=rgba [watermark]; [in][watermark] overlay={}:{} [out]".format("frame.png", scale_factor, scale_factor, frame_x, frame_y), **{'c:a': 'copy'}).run()
+
+    # Delete temporary files
+    os.remove("input.mp4")
+    os.remove("frame.png")
+
+    # Get the full media URL for the output video
+    output_video_url = request.build_absolute_uri(os.path.join(settings.MEDIA_URL, 'video-with-frame', output_video))
+
+    return Response({"message": "Video processing completed.", "output_video": output_video_url}, status=200)
+
 
 class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
     queryset = CustomerOtherPostFrameMapping.objects

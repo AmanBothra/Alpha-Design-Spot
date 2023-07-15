@@ -108,11 +108,13 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="post.file", read_only=True)
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
     customer_number = serializers.SerializerMethodField(read_only=True)
+    thumbnail = serializers.FileField(source="post.thumbnail", read_only=True)
 
     class Meta:
         model = CustomerPostFrameMapping
         fields = [
-            'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image', 'frame_image'
+            'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image',
+            'frame_image', 'thumbnail'
         ]
         
     def get_customer_number(self,obj):
