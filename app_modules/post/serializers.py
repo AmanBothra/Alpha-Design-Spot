@@ -91,7 +91,7 @@ class OtherPostSerializer(serializers.ModelSerializer):
     class Meta:
         model  = OtherPost
         fields = ['id', 'category', 'category_name', 'name', 'file_type', 'file', 'group', 
-            'group_name', 'is_active', "thumbnail"
+            'group_name', 'is_active', "thumbnail", "is_active", "is_featured"
         ]
         
     def get_group_name(self, obj):

@@ -55,6 +55,7 @@ class OtherPost(BaseModel):
     )
     thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False)
     
     def __str__(self) -> str:
         return self.name

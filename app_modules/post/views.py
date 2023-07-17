@@ -132,7 +132,6 @@ class CustomerPostFrameMappingViewSet(BaseModelViewSet):
         return queryset
     
 
-fs = FileSystemStorage(location=settings.MEDIA_ROOT)
 
 @api_view(['POST'])
 def generate_output_video(request):
