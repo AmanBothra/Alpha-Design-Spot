@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from lib.constants import USER_TYPE
-from lib.helpers import rename_file_name
+from lib.helpers import rename_file_name, converter_to_webp
 from .managers import UserManager
 from lib.models import BaseModel
 
@@ -58,6 +58,11 @@ class CustomerFrame(BaseModel):
     
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number}"
+    
+    def save(self, *args, **kwargs):
+        if self.frame_img:
+            converter_to_webp(self.frame_img)
+        super().save(*args, **kwargs)
     
     
 class PaymentMethod(models.Model):

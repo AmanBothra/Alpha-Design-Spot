@@ -1,7 +1,7 @@
 from django.db import models
 
 from lib.models import BaseModel
-from lib.helpers import rename_file_name
+from lib.helpers import rename_file_name, converter_to_webp
 from account.models import User, CustomerFrame, CustomerGroup
 from lib.constants import FILE_TYPE
 
@@ -11,9 +11,15 @@ class Category(BaseModel):
     sub_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     banner_image = models.ImageField(upload_to='category_banners/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     
     def __str__(self) -> str:
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.banner_image:
+            converter_to_webp(self.banner_image)
+        super().save(*args, **kwargs)
 
 
 class Event(BaseModel):
@@ -23,6 +29,11 @@ class Event(BaseModel):
     
     def __str__(self) -> str:
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.thumbnail:
+            converter_to_webp(self.thumbnail)
+        super().save(*args, **kwargs)
     
     
 class Post(BaseModel):
@@ -40,6 +51,13 @@ class Post(BaseModel):
     
     def __str__(self) -> str:
         return self.event.name
+    
+    def save(self, *args, **kwargs):
+        if self.thumbnail:
+            converter_to_webp(self.thumbnail)
+        if self.file_type == "image" and self.file:
+            converter_to_webp(self.file)
+        super().save(*args, **kwargs)
 
 
 class OtherPost(BaseModel):
@@ -55,30 +73,16 @@ class OtherPost(BaseModel):
     )
     thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
-    is_featured = models.BooleanField(default=False)
     
     def __str__(self) -> str:
         return self.name
-
-
-class DownloadPost(BaseModel):
-    customer = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="customer_download_post"
-    )
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name="download_post"
-    )
-    other_post = models.ForeignKey(
-        OtherPost,
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name="download_other_post"
-    )
+    
+    def save(self, *args, **kwargs):
+        if self.thumbnail:
+            converter_to_webp(self.thumbnail)
+        if self.file_type == "image" and self.file:
+            converter_to_webp(self.file)
+        super().save(*args, **kwargs)
 
 
 class CustomerPostFrameMapping(BaseModel):

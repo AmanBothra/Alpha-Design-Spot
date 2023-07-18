@@ -6,7 +6,6 @@ from django.db import transaction
 from .models import CustomerFrame
 from app_modules.post.models import Event, Post, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
 
-
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
     customer = instance.customer
@@ -19,22 +18,19 @@ def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
         group=customer_group, event__in=future_events
     )
     
-    mappings = [
-        CustomerPostFrameMapping(
-            customer=customer,
-            post=post,
-            customer_frame=instance,
-            is_downloaded=False
-        )
-        for post in posts
-    ]
-
     with transaction.atomic():
-        CustomerPostFrameMapping.objects.bulk_create(mappings)
+        for post in posts:
+            mapping, _ = CustomerPostFrameMapping.objects.get_or_create(
+                customer=customer,
+                post=post,
+                customer_frame=instance
+            )
+            mapping.is_downloaded = False
+            mapping.save()
         
         
 @receiver(post_save, sender=CustomerFrame)
-def mapping_customer_frame_with_oher_posts(sender, instance, created, **kwargs):
+def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs):
     customer = instance.customer
     customer_group = instance.group
 
@@ -42,16 +38,12 @@ def mapping_customer_frame_with_oher_posts(sender, instance, created, **kwargs):
         group=customer_group,
     ).select_related('group', 'category')
     
-    mappings = [
-        CustomerOtherPostFrameMapping(
-            customer=customer,
-            other_post=other_post,
-            customer_frame=instance,
-            is_downloaded=False
-        )
-        for other_post in other_posts
-    ]
-    
     with transaction.atomic():
-        print("signal call")
-        CustomerOtherPostFrameMapping.objects.bulk_create(mappings)
+        for other_post in other_posts:
+            mapping, _ = CustomerOtherPostFrameMapping.objects.get_or_create(
+                customer=customer,
+                other_post=other_post,
+                customer_frame=instance
+            )
+            mapping.is_downloaded = False
+            mapping.save()
