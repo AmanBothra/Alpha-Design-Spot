@@ -73,7 +73,7 @@ class EventViewset(BaseModelViewSet):
         elif date_type == "tomorrow":
             queryset = queryset.filter(event_date=tomorrow)
         elif date_type == "upcoming":
-            queryset = queryset.filter(event_date__gte=tomorrow).order_by("-event_date")
+            queryset = queryset.filter(event_date__gte=tomorrow).order_by("event_date")
             
         return queryset
     
