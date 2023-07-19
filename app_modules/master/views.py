@@ -1,6 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 
 from app_modules.master import serializers
 from app_modules.master.models import (
@@ -35,6 +35,7 @@ class SplashScreenViewSet(BaseModelViewSet):
     serializer_class = serializers.SplashScreenSerializer
     queryset = SplashScreen.objects.all()
     http_method_names = ['get', 'post', 'patch']
+    permission_classes = [permissions.AllowAny]
     
     def create(self, request, *args, **kwargs):
         # Check if an object already exists
