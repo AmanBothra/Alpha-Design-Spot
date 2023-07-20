@@ -63,6 +63,11 @@ class CustomerFrame(BaseModel):
         if self.frame_img:
             converter_to_webp(self.frame_img)
         super().save(*args, **kwargs)
+        
+    def is_a_group(self):
+        # Check if the group name starts with 'A'
+        return self.group.name.startswith('A') if self.group else False
+
     
     
 class PaymentMethod(models.Model):

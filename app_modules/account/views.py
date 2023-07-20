@@ -40,16 +40,21 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         user = authenticate(request, username=email, password=password)
-
+        
         if user is not None:
             refresh = RefreshToken.for_user(user)
+            
+            customer_frame = CustomerFrame.objects.filter(customer=user).first()
+            is_a_group = customer_frame.is_a_group() if customer_frame else False
+
             return Response(
                 {
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
                     'id': user.id,
                     'is_verify': user.is_verify,
-                    'is_customer': bool(user.no_of_post <=1)
+                    'is_customer': bool(user.no_of_post <=1),
+                    'is_a_group': is_a_group,
                 }
             )
         else:
