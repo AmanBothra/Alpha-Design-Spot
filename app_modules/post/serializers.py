@@ -125,7 +125,7 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
         return None
     
     def ger_is_a_group(self, obj):
-        if self.customer_frame.group.name == "a" or "A":
+        if obj.customer_frame.group.name == "a" or "A":
             return True
         else:
             return False
@@ -146,7 +146,7 @@ class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
         
     
     def ger_is_a_group(self, obj):
-        if self.customer_frame.group.name == "a" or "A":
+        if obj.customer_frame.group.name == "a" or "A":
             return True
         else:
             return False
