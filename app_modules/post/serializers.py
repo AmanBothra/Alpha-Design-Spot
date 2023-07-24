@@ -109,7 +109,7 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
     customer_number = serializers.SerializerMethodField(read_only=True)
     thumbnail = serializers.FileField(source="post.thumbnail", read_only=True)
-    is_a_group = serializers.BooleanField()
+    is_a_group = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerPostFrameMapping
@@ -124,18 +124,18 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
             return request.user.whatsapp_number
         return None
     
-    def ger_is_a_group(self, obj):
+    def get_is_a_group(self, obj):
         if obj.customer_frame.group.name == "a" or "A":
-            return True
+            return "True"
         else:
-            return False
+            return "False"
     
     
 
 class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="other_post.file", read_only=True)
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
-    is_a_group = serializers.BooleanField()
+    is_a_group = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomerOtherPostFrameMapping
@@ -145,7 +145,7 @@ class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
         ]
         
     
-    def ger_is_a_group(self, obj):
+    def get_is_a_group(self, obj):
         if obj.customer_frame.group.name == "a" or "A":
             return True
         else:
