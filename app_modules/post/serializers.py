@@ -109,12 +109,13 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
     customer_number = serializers.SerializerMethodField(read_only=True)
     thumbnail = serializers.FileField(source="post.thumbnail", read_only=True)
+    is_a_group = serializers.BooleanField()
 
     class Meta:
         model = CustomerPostFrameMapping
         fields = [
             'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image',
-            'frame_image', 'thumbnail'
+            'frame_image', 'thumbnail', 'is_a_group'
         ]
         
     def get_customer_number(self,obj):
@@ -123,14 +124,29 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
             return request.user.whatsapp_number
         return None
     
+    def ger_is_a_group(self, obj):
+        if self.customer_frame.group.name == "a" or "A":
+            return True
+        else:
+            return False
+    
     
 
 class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="other_post.file", read_only=True)
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
+    is_a_group = serializers.BooleanField()
     
     class Meta:
         model = CustomerOtherPostFrameMapping
         fields = [
-            'id', 'customer', 'other_post', 'customer_frame', 'is_downloaded', 'post_image', 'frame_image'
+            'id', 'customer', 'other_post', 'customer_frame', 'is_downloaded', 'post_image', 'frame_image',
+            'is_a_group'
         ]
+        
+    
+    def ger_is_a_group(self, obj):
+        if self.customer_frame.group.name == "a" or "A":
+            return True
+        else:
+            return False
