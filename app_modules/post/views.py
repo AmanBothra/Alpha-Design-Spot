@@ -32,12 +32,16 @@ class CategoeryViewset(BaseModelViewSet):
     }
     
     def get_queryset(self):
+        file_type = self.request.GET.get('file_type')
+        
         queryset = super().get_queryset()
         exclude_main_categories = self.request.query_params.get('exclude_main_categories', True) # set by default true
 
         if exclude_main_categories:
             queryset = queryset.exclude(sub_category__isnull=False)
-
+        
+        if file_type:
+            queryset = Category.objects.filter(other_post_categories__file_type=file_type).distinct()
         return queryset
     
     
@@ -64,6 +68,8 @@ class EventViewset(BaseModelViewSet):
     
     def get_queryset(self):
         date_type = self.request.GET.get('date_type')
+        file_type = self.request.GET.get('file_type')
+        
         today = date.today()
         tomorrow = today + timedelta(days=1)
         queryset = Event.objects.all().order_by('-event_date')
@@ -73,8 +79,10 @@ class EventViewset(BaseModelViewSet):
         elif date_type == "tomorrow":
             queryset = queryset.filter(event_date=tomorrow)
         elif date_type == "upcoming":
-            queryset = queryset.filter(event_date__gte=tomorrow).order_by("event_date")
-            
+            queryset = queryset.filter(event_date__gt=tomorrow).order_by("event_date")
+        
+        if file_type:
+            queryset = queryset.filter(post_event__file_type=file_type).distinct()
         return queryset
     
             
