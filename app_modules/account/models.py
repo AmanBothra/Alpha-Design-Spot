@@ -105,10 +105,15 @@ class Subscription(BaseModel):
     start_date = models.DateField()
     end_date = models.DateField()
     transaction_number = models.CharField(max_length=50, null=True, blank=True)
+    file = models.FileField(upload_to=rename_file_name('subscription/'), null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    
     
     def __str__(self) -> str:
         return f"{self.order_number} {self.plan.name}"
+    
+    def save(self, *args, **kwargs):
+        if self.file:
+            converter_to_webp(self.file)
+        super().save(*args, **kwargs)
     
     

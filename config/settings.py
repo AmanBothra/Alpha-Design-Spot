@@ -47,6 +47,7 @@ LOCAL_APPS = [
     'app_modules.account.apps.AccountConfig',
     'app_modules.post.apps.PostConfig',
     'app_modules.master.apps.MasterConfig',
+    'app_modules.website.apps.WebsiteConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
