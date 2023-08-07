@@ -1,15 +1,15 @@
 import os
-from io import BytesIO
-from django.core.files.base import ContentFile
-from PIL import Image
-from uuid import uuid4
-import os
 import uuid
+from io import BytesIO
+from uuid import uuid4
+
 import ffmpeg
+from PIL import Image
 from django.conf import settings
-from django.utils.deconstruct import deconstructible
-from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.validators import FileExtensionValidator
+from django.utils.deconstruct import deconstructible
 
 
 @deconstructible
@@ -24,13 +24,13 @@ class rename_file_name(object):
         filename = '{}.{}'.format(uuid4().hex, ext)
         # return the whole path to the file
         return os.path.join(self.path, filename)
-    
-    
+
+
 def get_image_file_extension_validator():
     return [
         FileExtensionValidator(allowed_extensions=["svg", "png", "jpg", "jpeg", "webp"])
     ]
-    
+
 
 def file_size(value):
     """
@@ -47,7 +47,7 @@ def file_size(value):
     limit = 5242880
     if value.size > limit:
         raise ValidationError("File too large. Size should not exceed 5 MB.")
-    
+
 
 def file_extension(value):
     ext = os.path.splitext(value.name)[1]
@@ -56,8 +56,8 @@ def file_extension(value):
         raise ValidationError(
             "Unsupported file type. Only Pdf and MsWord files are allowed."
         )
-        
-        
+
+
 def converter_to_webp(image_instance):
     """
     Convert any image object to WebP for faster image load time.
@@ -70,8 +70,9 @@ def converter_to_webp(image_instance):
             image = Image.open(image_instance)
             image_io = BytesIO()
             image.save(image_io, format="WEBP", quality=100)
-            image_instance.save(image_instance.name.split(".")[0] + ".webp", ContentFile(image_io.getvalue()), save=False)
-            
+            image_instance.save(image_instance.name.split(".")[0] + ".webp", ContentFile(image_io.getvalue()),
+                                save=False)
+
 
 def generate_video_with_frame(customer_frame, post):
     # Get the paths of the frame image and video from the CustomerFrame and Post objects
@@ -106,7 +107,9 @@ def generate_video_with_frame(customer_frame, post):
 
     # Add frame to the video using ffmpeg
     ffmpeg.input(video_path).output(os.path.join(media_directory, output_video),
-                                    vf="movie={},scale={}*iw:{}*ih,format=rgba [watermark]; [in][watermark] overlay={}:{} [out]".format(frame_image_path, scale_factor, scale_factor, frame_x, frame_y), **{'c:a': 'copy'}).run()
+                                    vf="movie={},scale={}*iw:{}*ih,format=rgba [watermark]; [in][watermark] overlay={}:{} [out]".format(
+                                        frame_image_path, scale_factor, scale_factor, frame_x, frame_y),
+                                    **{'c:a': 'copy'}).run()
 
     # Get the full media URL for the output video
     output_video_url = os.path.join(settings.MEDIA_URL, 'video-with-frame', output_video)

@@ -20,7 +20,18 @@ DOMAIN = env.str("DOMAIN")
 DOMAIN_IP = env.str("DOMAIN_IP")
 ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, DOMAIN_IP, 'localhost', "*"]
 
+
 AUTH_USER_MODEL = 'account.User'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 # ------------------------------- APPS and MIDDLEWARE ------------------------------
 DJANGO_APPS = [
@@ -162,7 +173,6 @@ CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
 
-
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = [
@@ -224,11 +234,9 @@ JAZZMIN_SETTINGS = {
     "related_modal_active": False,
 }
 
-
 # swagger
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {

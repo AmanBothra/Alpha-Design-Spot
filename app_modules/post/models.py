@@ -1,9 +1,9 @@
+from account.models import User, CustomerFrame, CustomerGroup
 from django.db import models
 
-from lib.models import BaseModel
-from lib.helpers import rename_file_name, converter_to_webp
-from account.models import User, CustomerFrame, CustomerGroup
 from lib.constants import FILE_TYPE
+from lib.helpers import rename_file_name, converter_to_webp
+from lib.models import BaseModel
 
 
 class Category(BaseModel):
@@ -12,10 +12,10 @@ class Category(BaseModel):
     banner_image = models.ImageField(upload_to='category_banners/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return self.name
-    
+
     def save(self, *args, **kwargs):
         if self.banner_image:
             converter_to_webp(self.banner_image)
@@ -26,16 +26,16 @@ class Event(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     event_date = models.DateField(null=True, blank=True)
     thumbnail = models.FileField(upload_to=rename_file_name('event_thumbnail/'), null=True)
-    
+
     def __str__(self) -> str:
         return self.name
-    
+
     def save(self, *args, **kwargs):
         if self.thumbnail:
             converter_to_webp(self.thumbnail)
         super().save(*args, **kwargs)
-    
-    
+
+
 class Post(BaseModel):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="post_event")
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
@@ -48,10 +48,10 @@ class Post(BaseModel):
     )
     thumbnail = models.FileField(upload_to=rename_file_name('post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return self.event.name
-    
+
     def save(self, *args, **kwargs):
         if self.thumbnail:
             converter_to_webp(self.thumbnail)
@@ -73,10 +73,10 @@ class OtherPost(BaseModel):
     )
     thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
     is_active = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return self.name
-    
+
     def save(self, *args, **kwargs):
         if self.thumbnail:
             converter_to_webp(self.thumbnail)
@@ -100,14 +100,14 @@ class CustomerPostFrameMapping(BaseModel):
         related_name="customer_frame_mapping"
     )
     is_downloaded = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return self.customer.whatsapp_number
 
 
-
 class CustomerOtherPostFrameMapping(BaseModel):
-    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="other_post_frame_mapping")
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
+                                 related_name="other_post_frame_mapping")
     other_post = models.ForeignKey(
         OtherPost,
         on_delete=models.CASCADE,
@@ -121,6 +121,6 @@ class CustomerOtherPostFrameMapping(BaseModel):
         related_name="customer_other_post_frame_mapping"
     )
     is_downloaded = models.BooleanField(default=False)
-    
+
     def __str__(self) -> str:
         return self.customer.whatsapp_number
