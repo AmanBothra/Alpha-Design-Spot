@@ -1,7 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import datetime
-from django.db import transaction
 
 from .models import CustomerFrame
 from app_modules.post.models import Event, Post, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
@@ -18,15 +17,12 @@ def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
         group=customer_group, event__in=future_events
     )
     
-    with transaction.atomic():
-        for post in posts:
-            mapping, _ = CustomerPostFrameMapping.objects.get_or_create(
-                customer=customer,
-                post=post,
-                customer_frame=instance
-            )
-            mapping.is_downloaded = False
-            mapping.save()
+    for post in posts:
+        mapping, created = CustomerPostFrameMapping.objects.update_or_create(
+            customer=customer,
+            post=post,
+            customer_frame=instance,
+        )
         
         
 @receiver(post_save, sender=CustomerFrame)
@@ -38,12 +34,10 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
         group=customer_group,
     ).select_related('group', 'category')
     
-    with transaction.atomic():
-        for other_post in other_posts:
-            mapping, _ = CustomerOtherPostFrameMapping.objects.get_or_create(
-                customer=customer,
-                other_post=other_post,
-                customer_frame=instance
-            )
-            mapping.is_downloaded = False
-            mapping.save()
+    for other_post in other_posts:
+        mapping, created = CustomerOtherPostFrameMapping.objects.update_or_create(
+            customer=customer,
+            other_post=other_post,
+            customer_frame=instance
+        )
+            
