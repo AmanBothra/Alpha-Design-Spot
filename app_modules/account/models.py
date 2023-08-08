@@ -5,6 +5,7 @@ from lib.constants import USER_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
 from .managers import UserManager
 from lib.models import BaseModel
+from app_modules.master.models import BusinessCategory
 
 
 class User(AbstractUser, BaseModel):
@@ -14,6 +15,10 @@ class User(AbstractUser, BaseModel):
     whatsapp_number = models.CharField(max_length=20, blank=True, unique=True)
     address = models.TextField(null=True, blank=True)
     pincode = models.IntegerField(null=True, blank=True)
+    business_category = models.ForeignKey(BusinessCategory, null=True, blank=True,
+                                          on_delete=models.SET_NULL, related_name="user_business_category")
+    business_sub_category = models.ForeignKey(BusinessCategory, null=True, blank=True,
+                                          on_delete=models.SET_NULL, related_name="user_business_sub_category")
     city = models.CharField(max_length=100, null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
     no_of_post = models.IntegerField(default=1)
@@ -71,7 +76,7 @@ class CustomerFrame(BaseModel):
     
     
 class PaymentMethod(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     
     def __str__(self) -> str:
         return self.name
@@ -99,8 +104,8 @@ def order_number():
     
 class Subscription(BaseModel):
     order_number = models.CharField(max_length=10, default=order_number)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscription_users")
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="subscription_plans")
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='subscription_payment_methods')
     start_date = models.DateField()
     end_date = models.DateField()

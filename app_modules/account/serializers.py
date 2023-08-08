@@ -1,6 +1,10 @@
 from rest_framework import serializers
 
-from .models import User, CustomerFrame, CustomerGroup
+from .models import (
+    User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription
+)
+
+
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
@@ -8,7 +12,8 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'first_name', 'last_name', 'email', 'user_type', 'whatsapp_number', 'address', 'pincode',
-            'city', 'dob', 'no_of_post', 'password', "is_verify"
+            'city', 'dob', "business_category", "business_sub_category", 'no_of_post', 'password',
+            "is_verify", "created", "modified"
         )
         extra_kwargs = {
             'password': {'write_only': True},
@@ -83,3 +88,24 @@ class CuatomerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'whatsapp_number')
+        
+        
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = ('id', 'name')
+        
+        
+class PlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Plan
+        fields = ('id', 'name', 'duration_in_months', 'price')
+        
+        
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = [
+            'id', 'order_number', 'user', 'plan', 'payment_method', 'start_date', 'end_date',
+            'transaction_number', 'file', 'is_active'
+        ]

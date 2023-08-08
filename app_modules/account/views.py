@@ -8,10 +8,12 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 
 from .serializers import (
-    CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer,
-    UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer
+    CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
+    UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
 )
-from .models import CustomerFrame, User, CustomerGroup
+from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription
+from lib.viewsets import BaseModelViewSet
+
 
 class RegistrationView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -98,3 +100,22 @@ class CustomerListApiView(ListAPIView):
     pagination_class = None
     queryset  = User.objects.all()
     serializer_class = CuatomerListSerializer
+    
+    
+class PlanViewSet(viewsets.ModelViewSet):
+    pagination_class = None
+    queryset  = Plan.objects.all().order_by('-id')
+    serializer_class = PlanSerializer
+    
+    
+class PaymentMethodViewSet(viewsets.ModelViewSet):
+    pagination_class = None
+    queryset  = PaymentMethod.objects.all().order_by('-id')
+    serializer_class = PaymentMethodSerializer
+    
+    
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'whatsapp_number', 'is_verify']

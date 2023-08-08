@@ -1,7 +1,6 @@
 from django.db import models
 
 from lib.models import BaseModel
-from account.models import User
 
 
 class Banner(BaseModel):
@@ -42,15 +41,19 @@ class TermsAndCondition(BaseModel):
 
 
 class Feedback(BaseModel):
-    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    customer = models.ForeignKey("account.User", on_delete=models.CASCADE, null=True, blank=True)
     feedback = models.TextField()
     
     def __str__(self) -> str:
         return self.customer.whatsapp_number
     
 
-
-
-
+class BusinessCategory(BaseModel):
+    name = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    sub_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    is_featured = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return self.name
 
 
