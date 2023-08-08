@@ -23,8 +23,9 @@ class Category(BaseModel):
 
 
 class Event(BaseModel):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     event_date = models.DateField(null=True, blank=True)
+    event_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     thumbnail = models.FileField(upload_to=rename_file_name('event_thumbnail/'), null=True)
 
     def __str__(self) -> str:

@@ -39,7 +39,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'name', 'event_date', 'thumbnail']
+        fields = ['id', 'name', 'event_date', 'event_type', 'thumbnail']
         
     def validate_event_date(self, value):
         if value and value < timezone.now().date():

@@ -50,6 +50,11 @@ class CustomerGroup(BaseModel):
 
 class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
+    business_category = models.ForeignKey(
+        BusinessCategory,
+        on_delete=models.CASCADE,
+        related_name="customer_frame_business_category", null=True, blank=True
+    )# show only main category
     frame_img = models.FileField(
         upload_to=rename_file_name('customer_frame/'),
         blank=True, null=True

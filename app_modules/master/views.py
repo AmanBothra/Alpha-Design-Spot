@@ -109,7 +109,6 @@ class BusinessCategoeryViewset(BaseModelViewSet):
     def update_subcategory(self, request, pk=None):
         print(request.data)
         sub_category = self.get_object()
-        print(sub_category, "-----------------")
         serializer = self.get_serializer(sub_category, data=request.data, partial=True)
         
         if serializer.is_valid():

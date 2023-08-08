@@ -58,11 +58,10 @@ class EventViewset(BaseModelViewSet):
     serializer_class = serializers.EventSerializer
     filterset_class = EventFilter
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ('event_date', 'name')
+    search_fields = ('event_date', 'name', 'event_type')
 
     def get_queryset(self):
         date_type = self.request.GET.get('date_type')
-        file_type = self.request.GET.get('file_type')
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
@@ -74,9 +73,7 @@ class EventViewset(BaseModelViewSet):
             queryset = queryset.filter(event_date=tomorrow)
         elif date_type == "upcoming":
             queryset = queryset.filter(event_date__gt=tomorrow).order_by("event_date")
-
-        if file_type:
-            queryset = queryset.filter(post_event__file_type=file_type).distinct()
+            
         return queryset
 
 

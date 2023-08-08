@@ -5,8 +5,6 @@ from .models import (
 )
 
 
-
-
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -54,7 +52,7 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomerFrame
-        fields = ('id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number')
+        fields = ('id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number', 'business_category')
         
     def create(self, validated_data):
         customer = validated_data.get('customer')
