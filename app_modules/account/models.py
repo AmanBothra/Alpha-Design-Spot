@@ -15,10 +15,6 @@ class User(AbstractUser, BaseModel):
     whatsapp_number = models.CharField(max_length=20, blank=True, unique=True)
     address = models.TextField(null=True, blank=True)
     pincode = models.IntegerField(null=True, blank=True)
-    business_category = models.ForeignKey(BusinessCategory, null=True, blank=True,
-                                          on_delete=models.SET_NULL, related_name="user_business_category")
-    business_sub_category = models.ForeignKey(BusinessCategory, null=True, blank=True,
-                                          on_delete=models.SET_NULL, related_name="user_business_sub_category")
     city = models.CharField(max_length=100, null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
     no_of_post = models.IntegerField(default=1)
@@ -52,9 +48,16 @@ class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
     business_category = models.ForeignKey(
         BusinessCategory,
-        on_delete=models.CASCADE,
-        related_name="customer_frame_business_category", null=True, blank=True
-    )# show only main category
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="business_category_frames"
+    )
+    business_sub_category = models.ForeignKey(
+        BusinessCategory,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="business_sub_category_frames"
+    )
     frame_img = models.FileField(
         upload_to=rename_file_name('customer_frame/'),
         blank=True, null=True

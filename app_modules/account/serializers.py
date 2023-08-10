@@ -10,7 +10,7 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'first_name', 'last_name', 'email', 'user_type', 'whatsapp_number', 'address', 'pincode',
-            'city', 'dob', "business_category", "business_sub_category", 'no_of_post', 'password',
+            'city', 'dob', 'no_of_post', 'password',
             "is_verify", "created", "modified"
         )
         extra_kwargs = {
@@ -49,19 +49,36 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 class CustomerFrameSerializer(serializers.ModelSerializer):
     group_name = serializers.SerializerMethodField()
     mobile_number = serializers.SerializerMethodField()
+    bussiness_category_name = serializers.SerializerMethodField()
+    business_sub_category_name = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomerFrame
-        fields = ('id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number', 'business_category')
+        fields = (
+            'id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number', 'business_category',
+            'bussiness_category_name', 'business_sub_category', 'business_sub_category_name'
+        )
         
     def create(self, validated_data):
         customer = validated_data.get('customer')
+        business_category = validated_data.get('business_category')
+        business_sub_category = validated_data.get('business_sub_category')
         
-         # Check if the customer has reached the maximum number of posts
         no_of_post = customer.no_of_post
         existing_frame_count = CustomerFrame.objects.filter(customer=customer).count()
         if existing_frame_count >= no_of_post:
             raise serializers.ValidationError({"customer": f"The customer has already reached the maximum number of posts {no_of_post}."})
+        
+        existing_frame = CustomerFrame.objects.filter(
+            customer=customer,
+            business_category=business_category,
+            business_sub_category=business_sub_category
+        ).first()
+        
+        if existing_frame:
+            raise serializers.ValidationError(
+                {"customer": f"This {business_category.name} and {business_sub_category.name} already assigned to the customer."}
+            )
         
         return super().create(validated_data)
         
@@ -73,6 +90,12 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         
     def get_mobile_number(self, obj):
         return obj.customer.whatsapp_number
+    
+    def get_bussiness_category_name(self, obj):
+        return obj.business_category.name
+    
+    def get_business_sub_category_name(self, obj):
+        return obj.business_sub_category.name
         
         
 class CustomerGroupSerializer(serializers.ModelSerializer):

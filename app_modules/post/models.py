@@ -4,6 +4,7 @@ from django.db import models
 from lib.constants import FILE_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
 from lib.models import BaseModel
+from app_modules.master.models import BusinessCategory
 
 
 class Category(BaseModel):
@@ -47,18 +48,9 @@ class Post(BaseModel):
         related_name="customer_post_group",
         null=True, blank=True
     )
-    thumbnail = models.FileField(upload_to=rename_file_name('post_thumb/'), blank=True, null=True)
-    is_active = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.event.name
-
-    def save(self, *args, **kwargs):
-        if self.thumbnail:
-            converter_to_webp(self.thumbnail)
-        if self.file_type == "image" and self.file:
-            converter_to_webp(self.file)
-        super().save(*args, **kwargs)
 
 
 class OtherPost(BaseModel):
@@ -73,7 +65,6 @@ class OtherPost(BaseModel):
         null=True, blank=True
     )
     thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
-    is_active = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.name
@@ -84,6 +75,32 @@ class OtherPost(BaseModel):
         if self.file_type == "image" and self.file:
             converter_to_webp(self.file)
         super().save(*args, **kwargs)
+        
+        
+class BusinessPost(BaseModel):
+    business_category = models.ForeignKey(
+        BusinessCategory,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="business_category_posts"
+    )
+    business_sub_category = models.ForeignKey(
+        BusinessCategory,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="business_sub_category_posts"
+    )
+    file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
+    file = models.FileField(upload_to=rename_file_name('post/'))
+    group = models.ForeignKey(
+        CustomerGroup,
+        on_delete=models.CASCADE,
+        related_name="business_post_group",
+        null=True, blank=True
+    )
+
+    def __str__(self) -> str:
+        return f"Category is {self.business_category.name} and sub_category is {self.business_sub_category.name}"
 
 
 class CustomerPostFrameMapping(BaseModel):
@@ -120,6 +137,30 @@ class CustomerOtherPostFrameMapping(BaseModel):
         on_delete=models.CASCADE,
         null=True, blank=True,
         related_name="customer_other_post_frame_mapping"
+    )
+    is_downloaded = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return self.customer.whatsapp_number
+
+
+class BusinessPostFrameMapping(BaseModel):
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="business_post_frame_mapping"
+    )
+    post = models.ForeignKey(
+        BusinessPost,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="business_post_mapping"
+    )
+    customer_frame = models.ForeignKey(
+        CustomerFrame,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
     )
     is_downloaded = models.BooleanField(default=False)
 

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from app_modules.post import serializers
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, \
-    CustomerOtherPostFrameMapping
+    CustomerOtherPostFrameMapping, BusinessPost, BusinessPostFrameMapping
 from lib.helpers import generate_video_with_frame
 from lib.viewsets import BaseModelViewSet
 from .filters import EventFilter
@@ -104,6 +104,37 @@ class OtherPostViewset(BaseModelViewSet):
     serializer_class = serializers.OtherPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['group__name', 'category__name', 'is_active', 'file_type']
+    
+    
+class BusinessPostViewset(BaseModelViewSet):
+    
+    serializer_class = serializers.BusinessPostSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = [
+        'group__name','file_type', 'business_category__name', 'business_sub_category__name'
+    ]
+    
+    def get_queryset(self):
+        queryset = BusinessPost.objects.select_related('business_category', 'business_sub_category', 'group').all()
+        
+        return queryset
+        
+    
+
+    def get_serializer_context(self):
+        context = super(BusinessPostViewset, self).get_serializer_context()
+        return context
+
+    def create(self, request, *args, **kwargs):
+        event_id = request.data.get('event')
+        group_id = request.data.get('group')
+
+        if event_id and group_id:
+            existing_post = BusinessPostViewset.objects.filter(event_id=event_id, group_id=group_id).exists()
+            if existing_post:
+                raise ValidationError({"event": "A post with the same event and group already exists."})
+
+        return super().create(request, *args, **kwargs)
 
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):
@@ -150,6 +181,30 @@ class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
         queryset = self.queryset.prefetch_related('customer', 'other_post', 'customer_frame')
         if categoery_id:
             queryset = queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
+
+        return queryset
+    
+    
+class BusinessPostFrameMappingViewSet(BaseModelViewSet):
+    queryset = BusinessPostFrameMapping.objects
+    serializer_class = serializers.BusinessPostFrameMappingSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ['post__event__event_date']
+    filterset_fields = ['is_downloaded']
+    http_method_names = ['get', 'patch']
+
+    def get_serializer_context(self):
+        context = super(BusinessPostFrameMappingViewSet, self).get_serializer_context()
+        context["user"] = self.request.user
+        return context
+
+    def get_queryset(self):
+        customer = self.request.user
+        business_post_id = self.request.query_params.get('business_post_id')
+
+        queryset = self.queryset.prefetch_related('customer', 'post', 'customer_frame')
+        if business_post_id:
+            queryset = queryset.filter(customer=customer)
 
         return queryset
 

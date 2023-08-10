@@ -2,8 +2,10 @@ from rest_framework import serializers
 from django.utils import timezone
 
 from account.models import CustomerFrame
-from .models import Category, Post, Event, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping
-
+from .models import (
+    Category, Post, Event, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping,
+    BusinessPost, BusinessPostFrameMapping
+)
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -33,8 +35,7 @@ class CategorySerializer(serializers.ModelSerializer):
             serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
             return serializer.data
         return []
-
-        
+   
                
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,8 +55,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'event', 'file_type', 'file', 'group', 'thumbnail', 'is_active', 'added_on',
-                  'group_name', 'customer_details', 'event_details', 'is_active']
+        fields = ['id', 'event', 'file_type', 'file', 'group', 'added_on',
+                  'group_name', 'customer_details', 'event_details']
 
     def get_customer_details(self, obj):
         request = self.context.get('request')
@@ -83,7 +84,6 @@ class PostSerializer(serializers.ModelSerializer):
         return event_details
 
     
-
 class OtherPostSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     group_name = serializers.SerializerMethodField()
@@ -91,7 +91,7 @@ class OtherPostSerializer(serializers.ModelSerializer):
     class Meta:
         model  = OtherPost
         fields = ['id', 'category', 'category_name', 'name', 'file_type', 'file', 'group', 
-            'group_name', 'is_active', "thumbnail", "is_active"
+            'group_name', "thumbnail"
         ]
         
     def get_group_name(self, obj):
@@ -103,19 +103,47 @@ class OtherPostSerializer(serializers.ModelSerializer):
     def get_category_name(self, obj):
         return obj.category.name
     
+    
+class BusinessPostSerializer(serializers.ModelSerializer):
+    group_name = serializers.SerializerMethodField()
+    customer_details = serializers.SerializerMethodField()
+    business_category_name = serializers.SerializerMethodField()
+    business_sub_category_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = BusinessPost
+        fields = [
+            'id', 'business_category', 'business_sub_category', 'file_type', 'file', 'group', 'added_on',
+            'group_name', 'customer_details', 'business_category_name', 'business_sub_category_name'
+        ]
+
+    def get_customer_details(self, obj):
+        request = self.context.get('request')
+        frames = CustomerFrame.objects.select_related('customer', 'group').filter(customer=request.user, group__name=obj.group.name)
+        urls = [request.build_absolute_uri(frame.frame_img.url) for frame in frames]
+        return urls
+        
+    def get_group_name(self, obj):
+        return obj.group.name if obj.group else None
+    
+    def get_business_category_name(self, obj):
+        return obj.business_category.name if obj.business_category else None
+    
+    def get_business_sub_category_name(self, obj):
+        return obj.business_sub_category.name if obj.business_sub_category else None
+
         
 class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="post.file", read_only=True)
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
     customer_number = serializers.SerializerMethodField(read_only=True)
-    thumbnail = serializers.FileField(source="post.thumbnail", read_only=True)
     is_a_group = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomerPostFrameMapping
         fields = [
             'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image',
-            'frame_image', 'thumbnail', 'is_a_group'
+            'frame_image', 'is_a_group'
         ]
         
     def get_customer_number(self,obj):
@@ -131,7 +159,6 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
             return "False"
     
     
-
 class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="other_post.file", read_only=True)
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
@@ -150,3 +177,29 @@ class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
+        
+        
+class BusinessPostFrameMappingSerializer(serializers.ModelSerializer):
+    post_image = serializers.FileField(source="post.file", read_only=True)
+    frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
+    customer_number = serializers.SerializerMethodField(read_only=True)
+    is_a_group = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BusinessPostFrameMapping
+        fields = [
+            'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image',
+            'frame_image', 'is_a_group'
+        ]
+        
+    def get_customer_number(self,obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return request.user.whatsapp_number
+        return None
+    
+    def get_is_a_group(self, obj):
+        if obj.customer_frame.group.name == "a" or "A":
+            return "True"
+        else:
+            return "False"

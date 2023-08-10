@@ -8,9 +8,11 @@ router.register('category', views.CategoeryViewset, basename='category')
 router.register('sub-categories', views.SubcategoryViewSet, basename='sub-category')
 router.register('event', views.EventViewset, basename='event')
 router.register('post', views.PostViewset, basename='post')
+router.register('business-post', views.BusinessPostViewset, basename='business-post')
 router.register('other-post', views.OtherPostViewset, basename='other-post')
 router.register('customer-post-frame', views.CustomerPostFrameMappingViewSet, basename='customer-post-frame')
 router.register('customer-other-post-frame', views.CustomerOtherPostFrameMappingViewSet, basename='customer-other-post-frame')
+router.register('business-post-frame', views.BusinessPostFrameMappingViewSet, basename='business-post-frame')
 
 
 urlpatterns = [

@@ -12,7 +12,7 @@ from .serializers import (
     UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
 )
 from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription
-from lib.viewsets import BaseModelViewSet
+from app_modules.master.models import BusinessCategory
 
 
 class RegistrationView(APIView):
@@ -49,18 +49,28 @@ class LoginView(APIView):
             customer_frame = CustomerFrame.objects.filter(customer=user).first()
             is_a_group = customer_frame.is_a_group() if customer_frame else False
 
+            business_categories = BusinessCategory.objects.filter(
+                business_category_frames__customer=user
+            ).distinct()
+
+            category_names = [category.name for category in business_categories]
+            category_count = len(category_names)
+
             return Response(
                 {
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
                     'id': user.id,
                     'is_verify': user.is_verify,
-                    'is_customer': bool(user.no_of_post <=1),
+                    'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
+                    'category_count': category_count,
+                    'category_names': category_names
                 }
             )
         else:
             raise exceptions.AuthenticationFailed('Invalid email or password')
+
         
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
