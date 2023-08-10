@@ -67,5 +67,5 @@ class BusinessCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessCategory
         fields = [
-            'id', 'name', 'sub_category', 'is_featured'
+            'id', 'name', 'sub_category', 'thumbnail'
         ]

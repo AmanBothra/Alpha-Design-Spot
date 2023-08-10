@@ -107,7 +107,6 @@ class OtherPostViewset(BaseModelViewSet):
     
     
 class BusinessPostViewset(BaseModelViewSet):
-    
     serializer_class = serializers.BusinessPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = [
@@ -189,7 +188,6 @@ class BusinessPostFrameMappingViewSet(BaseModelViewSet):
     queryset = BusinessPostFrameMapping.objects
     serializer_class = serializers.BusinessPostFrameMappingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['post__event__event_date']
     filterset_fields = ['is_downloaded']
     http_method_names = ['get', 'patch']
 

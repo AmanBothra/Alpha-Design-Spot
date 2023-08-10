@@ -109,12 +109,14 @@ class BusinessPostSerializer(serializers.ModelSerializer):
     customer_details = serializers.SerializerMethodField()
     business_category_name = serializers.SerializerMethodField()
     business_sub_category_name = serializers.SerializerMethodField()
+    thumbnail = serializers.FileField(source="business_category.thumbnail", read_only=True)
     
     class Meta:
         model = BusinessPost
         fields = [
             'id', 'business_category', 'business_sub_category', 'file_type', 'file', 'group', 'added_on',
-            'group_name', 'customer_details', 'business_category_name', 'business_sub_category_name'
+            'group_name', 'customer_details', 'business_category_name', 'business_sub_category_name',
+            'thumbnail'
         ]
 
     def get_customer_details(self, obj):
