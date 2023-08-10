@@ -91,7 +91,7 @@ class BusinessPost(BaseModel):
         related_name="business_sub_category_posts"
     )
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
-    file = models.FileField(upload_to=rename_file_name('post/'))
+    file = models.FileField(upload_to=rename_file_name('business_post/'))
     group = models.ForeignKey(
         CustomerGroup,
         on_delete=models.CASCADE,

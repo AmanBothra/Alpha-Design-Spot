@@ -231,7 +231,9 @@ def generate_output_video(request):
     customer_post_id = request.data.get("customer_post_id")
     event_id = request.data.get("event_id")
     customer_other_post_id = request.data.get("customer_other_post_id")
-    categoery_id = request.query_params.get('categoery_id')
+    categoery_id = request.data.get('categoery_id')
+    business_post_id = request.data.get('business_post_id')
+    
 
     if customer_post_id:
         try:
@@ -256,6 +258,12 @@ def generate_output_video(request):
             data = CustomerPostFrameMapping.objects.get(customer=customer, other_post__category=categoery_id)
         except CustomerPostFrameMapping.DoesNotExist:
             return Response({"message": "Invalid category ID."}, status=400, request=request)
+        
+    if business_post_id:
+        try:
+            data = BusinessPostFrameMapping.objects.get(id=business_post_id)
+        except BusinessPostFrameMapping.DoesNotExist:
+            return Response({"message": "Invalid Business Post ID."}, status=400, request=request)
 
     # Extract the related CustomerFrame and Post objects from the mapping object
     customer_frame = data.customer_frame
@@ -266,7 +274,6 @@ def generate_output_video(request):
     output_video_url = cache.get(cache_key)
 
     if not output_video_url:
-        print("yes video hai ")
         # If the output video URL is not cached, generate the video with the frame
         output_video_url = generate_video_with_frame(customer_frame, post)
 
