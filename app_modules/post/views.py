@@ -114,8 +114,13 @@ class BusinessPostViewset(BaseModelViewSet):
     ]
     
     def get_queryset(self):
+        file_type = self.request.query_params.get('file_type')
         queryset = BusinessPost.objects.select_related('business_category', 'business_sub_category', 'group').all()
         
+        if file_type == "image":
+            queryset = queryset.filter(file_type=file_type)
+        if file_type == "video":
+            queryset = queryset.filter(file_type=file_type)
         return queryset
         
     
