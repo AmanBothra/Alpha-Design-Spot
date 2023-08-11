@@ -81,7 +81,7 @@ class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all()
     serializer_class = serializers.PostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['group__name', 'event__name', 'is_active', 'file_type']
+    search_fields = ['group__name', 'event__name', 'file_type']
 
     def get_serializer_context(self):
         context = super(PostViewset, self).get_serializer_context()
@@ -103,7 +103,7 @@ class OtherPostViewset(BaseModelViewSet):
     queryset = OtherPost.objects.select_related('category', 'group').all()
     serializer_class = serializers.OtherPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    search_fields = ['group__name', 'category__name', 'is_active', 'file_type']
+    search_fields = ['group__name', 'category__name', 'file_type']
     
     
 class BusinessPostViewset(BaseModelViewSet):
@@ -232,7 +232,7 @@ def generate_output_video(request):
     event_id = request.data.get("event_id")
     customer_other_post_id = request.data.get("customer_other_post_id")
     categoery_id = request.data.get('categoery_id')
-    business_post_id = request.data.get('business_post_id')
+    # business_post_id = request.data.get('business_post_id')
     
 
     if customer_post_id:
@@ -259,11 +259,11 @@ def generate_output_video(request):
         except CustomerPostFrameMapping.DoesNotExist:
             return Response({"message": "Invalid category ID."}, status=400, request=request)
         
-    if business_post_id:
-        try:
-            data = BusinessPostFrameMapping.objects.get(id=business_post_id)
-        except BusinessPostFrameMapping.DoesNotExist:
-            return Response({"message": "Invalid Business Post ID."}, status=400, request=request)
+    # if business_post_id:
+    #     try:
+    #         data = BusinessPostFrameMapping.objects.get(id=business_post_id)
+    #     except BusinessPostFrameMapping.DoesNotExist:
+    #         return Response({"message": "Invalid Business Post ID."}, status=400, request=request)
 
     # Extract the related CustomerFrame and Post objects from the mapping object
     customer_frame = data.customer_frame
