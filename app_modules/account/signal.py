@@ -8,8 +8,6 @@ from app_modules.post.models import (
     BusinessPostFrameMapping
 )
 
-
-
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
     if not created:
@@ -23,12 +21,31 @@ def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
             group=customer_group, event__in=future_events
         )
         
+        # Retrieve existing CustomerPostFrameMapping instances
+        existing_mappings = CustomerPostFrameMapping.objects.filter(
+            customer=customer,
+            post__group=customer_group
+        )
+        
         for post in posts:
-            CustomerPostFrameMapping.objects.update(
+            # Update existing mappings or create new ones
+            mapping, created = CustomerPostFrameMapping.objects.get_or_create(
                 customer=customer,
                 post=post,
-                customer_frame=instance,
+                defaults={'customer_frame': instance}
             )
+
+            if not created:
+                mapping.customer_frame = instance
+                mapping.save()
+            
+            # Mark existing mappings as downloaded if needed
+            if mapping.is_downloaded:
+                mapping.is_downloaded = False
+                mapping.save()
+
+                
+                
 
 
 @receiver(post_save, sender=CustomerFrame)
@@ -42,12 +59,16 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
         ).select_related('group', 'category')
         
         for other_post in other_posts:
-            CustomerOtherPostFrameMapping.objects.update(
+            mapping, created = CustomerOtherPostFrameMapping.objects.get_or_create(
                 customer=customer,
                 other_post=other_post,
-                customer_frame=instance,
+                defaults={'customer_frame': instance}
             )
-     
+
+            if not created:
+                mapping.customer_frame = instance
+                mapping.save()
+
 
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
@@ -57,14 +78,17 @@ def mapping_customer_frame_with_business_posts(sender, instance, created, **kwar
         category = instance.business_category
         sub_category = instance.business_sub_category
         
-        
         business_posts = BusinessPost.objects.filter(
             business_category=category, business_sub_category=sub_category
         ).select_related('business_category', 'business_sub_category')
 
         for business_post in business_posts:
-            BusinessPostFrameMapping.objects.update(
+            mapping, created = BusinessPostFrameMapping.objects.get_or_create(
                 customer=customer,
                 post=business_post,
-                customer_frame=instance,
+                defaults={'customer_frame': instance}
             )
+
+            if not created:
+                mapping.customer_frame = instance
+                mapping.save()
