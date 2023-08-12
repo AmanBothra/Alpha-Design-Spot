@@ -7,6 +7,8 @@ router = routers.DefaultRouter(trailing_slash=False)
 router.register('customer-frame', views.CustomerFrameViewSet, basename="customer_frame")
 router.register('user-profile', views.UserProfileListApiView, basename='user-profile-list')
 router.register('customer-group', views.CustomerGroupViewSet, basename='customer-group')
+router.register('customer-subscription', views.SubscriptionViewSet, basename='customer-subscription')
+
 
 urlpatterns = [
     path('', include(router.urls)),

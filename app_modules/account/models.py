@@ -92,7 +92,7 @@ class PaymentMethod(models.Model):
 
 class Plan(BaseModel):
     name = models.CharField(max_length=100)
-    duration_in_months = models.IntegerField(default=0)
+    # duration_in_months = models.IntegerField(default=0)
     price = models.IntegerField(default=0)
     
     def __str__(self):
@@ -100,18 +100,18 @@ class Plan(BaseModel):
     
     
 def order_number():
-    last_invoice = Subscription.objects.all().order_by('id').last()
-    if not last_invoice:
-         return '1001'
-    invoice_no = last_invoice.request_id
-    invoice_int = int(invoice_no)
-    new_invoice_int = invoice_int + 1
-    new_invoice_no = str(new_invoice_int)
-    return new_invoice_no
+    last_subscription = Subscription.objects.all().order_by('id').last()
+    if not last_subscription:
+         return 'ADS1001'
+    order_no = last_subscription.order_number
+    order_int = int(order_no[3:])
+    new_order_int = order_int + 1
+    new_order_no = f'ADS{new_order_int:04}'
+    return new_order_no
     
     
 class Subscription(BaseModel):
-    order_number = models.CharField(max_length=10, default=order_number)
+    order_number = models.CharField(max_length=10, default=order_number, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscription_users")
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="subscription_plans")
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='subscription_payment_methods')
@@ -125,6 +125,8 @@ class Subscription(BaseModel):
         return f"{self.order_number} {self.plan.name}"
     
     def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = order_number()
         if self.file:
             converter_to_webp(self.file)
         super().save(*args, **kwargs)

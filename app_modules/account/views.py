@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from datetime import timedelta
 from rest_framework import permissions, viewsets, exceptions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -71,8 +72,6 @@ class LoginView(APIView):
         else:
             raise exceptions.AuthenticationFailed('Invalid email or password')
 
-        
-
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.all()
     serializer_class = CustomerFrameSerializer
@@ -126,6 +125,21 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
     
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
-    queryset = Subscription.objects.all()
+    # queryset = Subscription.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'whatsapp_number', 'is_verify']
+    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'is_verify']
+    
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_staff:
+            return Subscription.objects.all().select_related('user', 'plan', 'payment_method')
+        else:
+            return Subscription.objects.filter(user=user).select_related('user', 'plan', 'payment_method')
+    
+    # def perform_create(self, serializer):
+    #     plan = serializer.validated_data['plan']
+    #     duration_in_months = plan.duration_in_months
+    #     start_date = serializer.validated_data['start_date']
+    #     end_date = start_date + timedelta(days=(30 * duration_in_months))  # Assuming 30 days per month
+    #     serializer.save(end_date=end_date)
