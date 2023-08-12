@@ -16,15 +16,6 @@ class UserAdmin(DefaultUserAdmin):
     search_fields = (
         "email",
     )
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email", "password1", "password2"),
-            },
-        ),
-    )
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("first_name", "last_name", "whatsapp_number", "user_type", "no_of_post")}),
@@ -53,6 +44,14 @@ class UserAdmin(DefaultUserAdmin):
                     "last_name",
                     "password1",
                     "password2",
+                    "whatsapp_number",
+                    "user_type",
+                    "no_of_post",
+                    "address",
+                    "city",
+                    "pincode",
+                    "dob",
+                    "is_verify"
                 ),
             },
         ),
