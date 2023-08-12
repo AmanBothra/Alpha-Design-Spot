@@ -140,12 +140,14 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
     frame_image= serializers.FileField(source="customer_frame.frame_img", read_only=True)
     customer_number = serializers.SerializerMethodField(read_only=True)
     is_a_group = serializers.SerializerMethodField()
+    event_name = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = CustomerPostFrameMapping
         fields = [
             'id', 'customer', 'customer_number', 'post', 'customer_frame', 'is_downloaded', 'post_image',
-            'frame_image', 'is_a_group'
+            'frame_image', 'is_a_group', 'event_name'
         ]
         
     def get_customer_number(self,obj):
@@ -159,6 +161,9 @@ class CustomerPostFrameMappingSerializer(serializers.ModelSerializer):
             return "True"
         else:
             return "False"
+        
+    def get_event_name(self, obj):
+        return obj.post.event.name
     
     
 class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
@@ -179,6 +184,8 @@ class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
+        
+        
         
         
 class BusinessPostFrameMappingSerializer(serializers.ModelSerializer):
