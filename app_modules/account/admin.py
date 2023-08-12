@@ -8,8 +8,8 @@ class UserAdmin(DefaultUserAdmin):
     list_display = (
         "id",
         "email",
-        "is_staff",
-        "is_active",
+        "whatsapp_number",
+        "is_verify",
         "date_joined",
     )
     list_filter = ("date_joined",)
