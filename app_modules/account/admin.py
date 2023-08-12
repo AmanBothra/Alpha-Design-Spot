@@ -60,7 +60,12 @@ class UserAdmin(DefaultUserAdmin):
     ordering = ("id",)
     
     
-admin.site.register(models.CustomerFrame)
+
+class CustomerFrameAdmin(admin.ModelAdmin):
+    list_display = ['customer', 'group']
+    
+    
+admin.site.register(models.CustomerFrame, CustomerFrameAdmin)
 admin.site.register(models.CustomerGroup)
 admin.site.register(models.Plan)
 admin.site.register(models.Subscription)
