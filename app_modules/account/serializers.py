@@ -92,10 +92,16 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         return obj.customer.whatsapp_number
     
     def get_bussiness_category_name(self, obj):
-        return obj.business_category.name
-    
+        if obj.business_category:
+            return obj.business_category.name
+        else:
+            return None 
+        
     def get_business_sub_category_name(self, obj):
-        return obj.business_sub_category.name
+        if obj.business_sub_category:
+            return obj.business_sub_category.name
+        else:
+            return None
         
         
 class CustomerGroupSerializer(serializers.ModelSerializer):

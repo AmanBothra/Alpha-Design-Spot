@@ -136,6 +136,8 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
                 customer_frame=instance,
                 is_downloaded=False
             )
+            
+            
 
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
