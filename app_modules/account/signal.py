@@ -108,25 +108,34 @@ def mapping_customer_frame_with_post(sender, instance, created, **kwargs):
         
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs):
-    if not created:  # Only update existing records, ignore new creations
-        customer = instance.customer
-        customer_group = instance.group
+    current_date = datetime.date.today()
+    future_events = Event.objects.filter(event_date__gte=current_date)
+    
+    existing_other_posts = OtherPost.objects.select_related('category', 'group').filter(
+        group=instance.group
+    )
+    
+    for other_post in existing_other_posts:
+        # Try to retrieve an existing mapping for this post and customer frame
+        mapping = CustomerOtherPostFrameMapping.objects.filter(
+            customer=instance.customer,
+            other_post=other_post
+        ).first()
 
-        other_posts = OtherPost.objects.filter(
-            group=customer_group,
-        ).select_related('group', 'category')
-        
-        for other_post in other_posts:
-            mapping, created = CustomerOtherPostFrameMapping.objects.get_or_create(
-                customer=customer,
+        if mapping:
+            # Update existing mapping
+            mapping.customer_frame = instance
+            if mapping.is_downloaded:
+                mapping.is_downloaded = False
+            mapping.save()
+        else:
+            # Create new mapping
+            new_mapping = CustomerOtherPostFrameMapping.objects.create(
+                customer=instance.customer,
                 other_post=other_post,
-                defaults={'customer_frame': instance}
+                customer_frame=instance,
+                is_downloaded=False
             )
-
-            if not created:
-                mapping.customer_frame = instance
-                mapping.save()
-
 
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
