@@ -23,7 +23,7 @@ def capture_group_update(sender, instance, **kwargs):
                                      old_group=existing_instance.group,
                                      new_group=instance.group,
                                      customer=instance.customer,
-                                     instance=instance
+                                     instance=instance  # Pass the instance here
                                     )
     except sender.DoesNotExist:
         pass
@@ -70,28 +70,6 @@ def group_update_handler(sender, old_group, new_group, customer, instance, **kwa
         print(f"Group changed from {old_group} to {new_group}")
     elif new_group is not None:
         print(f"Group set to {new_group}")
-
-        # Additional case: Create new mapping for existing posts
-        current_date = datetime.date.today()
-        future_events = Event.objects.filter(event_date__gte=current_date)
-
-        # Get existing posts for the new group and future events
-        existing_posts = Post.objects.select_related('event', 'group').filter(
-            group=new_group, event__in=future_events
-        )
-
-        for post in existing_posts:
-            new_mapping, created = CustomerPostFrameMapping.objects.get_or_create(
-                customer=customer,
-                post=post,
-                defaults={'customer_frame': instance}
-            )
-
-            if not created:
-                new_mapping.customer_frame = instance
-                if new_mapping.is_downloaded:
-                    new_mapping.is_downloaded = False
-                new_mapping.save()
 
         
 @receiver(post_save, sender=CustomerFrame)
