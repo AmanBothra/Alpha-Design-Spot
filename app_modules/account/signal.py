@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save, Signal
 from django.dispatch import receiver
 import datetime
 
@@ -8,44 +8,53 @@ from app_modules.post.models import (
     BusinessPostFrameMapping
 )
 
-@receiver(post_save, sender=CustomerFrame)
-def mapping_customer_frame_with_posts(sender, instance, created, **kwargs):
-    if not created:
-        customer = instance.customer
-        customer_group = instance.group
+# Define custom signal
+group_update_signal = Signal()
 
-        current_date = datetime.date.today()
-        future_events = Event.objects.filter(event_date__gte=current_date)
-
-        posts = Post.objects.select_related('event', 'group').filter(
-            group=customer_group, event__in=future_events
-        )
+# Signal handler to capture group update
+@receiver(pre_save, sender=CustomerFrame)
+def capture_group_update(sender, instance, **kwargs):
+    try:
+        existing_instance = sender.objects.get(pk=instance.pk)
         
-        # Retrieve existing CustomerPostFrameMapping instances
-        existing_mappings = CustomerPostFrameMapping.objects.filter(
+        if existing_instance.group != instance.group:
+            # Trigger the custom signal with old and new group values
+            group_update_signal.send(sender=sender, 
+                                     old_group=existing_instance.group,
+                                     new_group=instance.group,
+                                     customer=instance.customer,
+                                     instance=instance  # Pass the instance here
+                                    )
+    except sender.DoesNotExist:
+        pass  # New instance, no need to capture group update
+
+# Signal receiver for the custom signal
+@receiver(group_update_signal)
+def group_update_handler(sender, old_group, new_group, customer, instance, **kwargs):
+    # Your custom logic here based on old_group and new_group
+    existing_mappings = CustomerPostFrameMapping.objects.filter(
+        customer=customer, post__group=new_group
+    )
+
+    # Update or create mappings based on existing_mappings
+    for post in existing_mappings:
+        mapping, created = CustomerPostFrameMapping.objects.get_or_create(
             customer=customer,
-            post__group=customer_group
+            post=post,
+            defaults={'customer_frame': instance}
         )
-        
-        for post in posts:
-            # Update existing mappings or create new ones
-            mapping, created = CustomerPostFrameMapping.objects.get_or_create(
-                customer=customer,
-                post=post,
-                defaults={'customer_frame': instance}
-            )
 
-            if not created:
-                mapping.customer_frame = instance
-                mapping.save()
-            
-            # Mark existing mappings as downloaded if needed
+        if not created:
+            mapping.customer_frame = instance
             if mapping.is_downloaded:
                 mapping.is_downloaded = False
-                mapping.save()
+            mapping.save()
 
-                
-                
+    # Sample logic: Print a message
+    if old_group is not None and new_group is not None:
+        print(f"Group changed from {old_group} to {new_group}")
+    elif new_group is not None:
+        print(f"Group set to {new_group}")
 
 
 @receiver(post_save, sender=CustomerFrame)
