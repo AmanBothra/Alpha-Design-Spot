@@ -69,16 +69,16 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         if existing_frame_count >= no_of_post:
             raise serializers.ValidationError({"customer": f"The customer has already reached the maximum number of posts {no_of_post}."})
         
-        existing_frame = CustomerFrame.objects.filter(
-            customer=customer,
-            business_category=business_category,
-            business_sub_category=business_sub_category
-        ).first()
+        # existing_frame = CustomerFrame.objects.filter(
+        #     customer=customer,
+        #     business_category=business_category,
+        #     business_sub_category=business_sub_category
+        # ).first()
         
-        if existing_frame:
-            raise serializers.ValidationError(
-                {"customer": f"This {business_category.name} and {business_sub_category.name} already assigned to the customer."}
-            )
+        # if existing_frame:
+        #     raise serializers.ValidationError(
+        #         {"customer": f"This {business_category.name} and {business_sub_category.name} already assigned to the customer."}
+        #     )
         
         return super().create(validated_data)
         

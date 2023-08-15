@@ -92,7 +92,7 @@ class PaymentMethod(models.Model):
 
 class Plan(BaseModel):
     name = models.CharField(max_length=100)
-    # duration_in_months = models.IntegerField(default=0)
+    duration_in_months = models.IntegerField(default=0)
     price = models.IntegerField(default=0)
     
     def __str__(self):
@@ -113,6 +113,8 @@ def order_number():
 class Subscription(BaseModel):
     order_number = models.CharField(max_length=10, default=order_number, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscription_users")
+    frame = models.ForeignKey(CustomerFrame, on_delete=models.SET_NULL,
+                              related_name="subscription_frames", null=True)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="subscription_plans")
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='subscription_payment_methods')
     start_date = models.DateField()

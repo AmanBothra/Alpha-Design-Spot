@@ -76,8 +76,27 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.all()
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['group__name', 'customer__whatsapp_number']
-    filterset_fields = ['group__name']
+    search_fields = ['group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name']
+    filterset_fields = ['group__name', 'business_sub_category__name']
+    
+    
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    
+    # def update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+        
+    #     old_group = instance.group 
+        
+    #     self.perform_update(serializer)
+        
+    #     # Get the new group from the updated instance
+    #     new_group = instance.group
+        
+        
     
 
 class UserProfileListApiView(viewsets.ModelViewSet):
