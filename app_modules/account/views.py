@@ -14,6 +14,7 @@ from .serializers import (
 )
 from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription
 from app_modules.master.models import BusinessCategory
+from app_modules.post.models import Post, Category
 
 
 class RegistrationView(APIView):
@@ -72,6 +73,7 @@ class LoginView(APIView):
         else:
             raise exceptions.AuthenticationFailed('Invalid email or password')
 
+
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.all()
     serializer_class = CustomerFrameSerializer
@@ -79,32 +81,21 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     search_fields = ['group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name']
     filterset_fields = ['group__name', 'business_sub_category__name']
     
-    
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    
-    
-    # def update(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-        
-    #     old_group = instance.group 
-        
-    #     self.perform_update(serializer)
-        
-    #     # Get the new group from the updated instance
-    #     new_group = instance.group
-        
-        
-    
 
-class UserProfileListApiView(viewsets.ModelViewSet):
+class UserProfileListApiView(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserProfileListSerializer
-    queryset = User.objects.all().exclude(is_superuser=True)
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
-    http_method_names = ['get', 'patch']
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        queryset = User.objects.all().exclude(is_superuser=True)
+        
+        recent = self.request.query_params.get('recent', None)
+        if recent:
+            queryset = queryset.filter(user_type="customer").order_by('-date_joined')[:15]
+        
+        return queryset
     
 
 class CustomerGroupViewSet(viewsets.ModelViewSet):
@@ -162,3 +153,26 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     #     start_date = serializer.validated_data['start_date']
     #     end_date = start_date + timedelta(days=(30 * duration_in_months))  # Assuming 30 days per month
     #     serializer.save(end_date=end_date)
+
+
+## Dashboard API
+###------------------------------------------
+
+class DashboardApi(APIView):
+    
+    def get(self, request, *args, **kwargs):
+        total_customer_count = User.objects.filter(user_type="customer").count()
+        total_post_count = Post.objects.select_related('event', 'group').count()
+        total_resaller_count = User.objects.filter(no_of_post__gt=1).count()
+        total_category_count = Category.objects.filter(sub_category__isnull=True).count()
+        total_sub_category_count = Category.objects.filter(sub_category__isnull=False).count()
+        
+        data = {
+            'total_customer_count': total_customer_count,
+            'total_post_count': total_post_count,
+            'total_resaller_count': total_resaller_count,
+            'total_category_count': total_category_count,
+            'total_sub_category_count': total_sub_category_count 
+        }
+        
+        return Response(data)
