@@ -227,7 +227,7 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
 
     # Whether to aut expand the menu
-    "navigation_expanded": True,
+    "navigation_expanded": False,
     "icons": {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
