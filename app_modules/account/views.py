@@ -116,7 +116,7 @@ class SendOTP(APIView):
     permission_classes = [permissions.AllowAny]
     
     def get(self, request, *args, **kwargs):
-        email = request.data.get("email")
+        email = request.query_params.get("email")
 
         try:
             user = User.objects.get(email=email)
