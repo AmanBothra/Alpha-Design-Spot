@@ -215,7 +215,11 @@ class BusinessPostFrameMappingViewSet(BaseModelViewSet):
 class EventListApiView(ListAPIView):
     pagination_class = None
     serializer_class = serializers.EventSerializer
-    queryset = Event.objects.all()
+    
+    def get_queryset(self):
+        today = date.today()
+        queryset = Event.objects.filter(event_date__gte=today)
+        return queryset
 
 
 class CategoryListApiView(ListAPIView):

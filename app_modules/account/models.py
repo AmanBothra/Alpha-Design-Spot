@@ -1,7 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+import random
 
-from lib.constants import USER_TYPE
+from lib.constants import USER_TYPE, UserConstants
 from lib.helpers import rename_file_name, converter_to_webp
 from .managers import UserManager
 from lib.models import BaseModel
@@ -35,6 +37,32 @@ class User(AbstractUser, BaseModel):
         if len(password) < 40:
             self.set_password(password)
         super(User, self).save(*args, **kwargs)
+        
+    def get_or_create_user_code(self, code_type=UserConstants.FORGOTTEN_PASSWORD):
+        user_code, created = UserCode.objects.get_or_create(
+            user=self, code_type=code_type, code=random.randint(1000, 9999)
+        )
+        if not created:
+            user_code.save()
+
+        return user_code, created
+        
+        
+class UserCode(models.Model):
+    code = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code_type = models.CharField(
+        max_length=30,
+        choices=UserConstants.get_code_type_choices(),
+        default=UserConstants.FORGOTTEN_PASSWORD,
+    )
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = (("user", "code_type"),)
+
+    def __str__(self):
+        return f"Code for {self.user} is {self.code}"
         
         
 class CustomerGroup(BaseModel):

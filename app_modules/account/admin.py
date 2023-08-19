@@ -69,3 +69,5 @@ admin.site.register(models.CustomerGroup)
 admin.site.register(models.Plan)
 admin.site.register(models.Subscription)
 admin.site.register(models.PaymentMethod)
+admin.site.register(models.UserCode)
+

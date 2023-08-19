@@ -1,20 +1,22 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from datetime import timedelta
 from rest_framework import permissions, viewsets, exceptions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
+from django.core.mail import send_mail
+from django.conf import settings
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
     UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
 )
-from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription
+from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
 from app_modules.master.models import BusinessCategory
 from app_modules.post.models import Post, Category
+from lib.constants import UserConstants
 
 
 class RegistrationView(APIView):
@@ -98,6 +100,90 @@ class UserProfileListApiView(viewsets.ReadOnlyModelViewSet):
         return queryset
     
 
+class CheckEmailExistence(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = User.objects.get(email=email)
+            return Response({"message": "Email exists"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            raise exceptions.ValidationError ({"Email": "Email does not exist"})
+        
+
+class SendOTP(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        email = request.data.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise exceptions.ValidationError({"email": "User not found with this email"})
+
+        # Send email OTP for email verification
+        user_code_email, _ = user.get_or_create_user_code(
+            code_type=UserConstants.FORGOTTEN_PASSWORD
+        )
+        subject = f"OTP for Email Verification"
+        message = f"Your email verification OTP is: {user_code_email.code}"
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [
+            user.email,
+        ]
+        send_mail(subject, message, email_from, recipient_list, fail_silently=True)
+
+        response_data = {"message": "Email OTP sent successfully."}
+        return Response(data=response_data, status=status.HTTP_200_OK)
+    
+    
+class VerifyOTP(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        email = data.get("email")
+        code = int(data.get("code"))
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise exceptions.ValidationError({"email": "User not found with this email"})
+
+        user_code = UserCode.objects.filter(
+            user=user, code_type=UserConstants.FORGOTTEN_PASSWORD
+        ).first()
+        if not user_code or code != user_code.code:
+            raise exceptions.ValidationError({"core": "Invalid Code"})
+
+        user.is_email_verify = True
+        user.save()
+        user_code.delete()
+        
+        return Response({"message": "Email verification is successfully completed",},status=status.HTTP_200_OK)
+
+class SetNewPassword(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+
+        if new_password != confirm_password:
+            raise exceptions.ValidationError({"password": "Passwords do not match"})
+
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+            return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            raise exceptions.ValidationError({"email": "User not found"})
+        
+    
 class CustomerGroupViewSet(viewsets.ModelViewSet):
     queryset = CustomerGroup.objects.all()
     serializer_class = CustomerGroupSerializer
@@ -161,9 +247,9 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
 class DashboardApi(APIView):
     
     def get(self, request, *args, **kwargs):
-        total_customer_count = User.objects.filter(user_type="customer").count()
+        total_customer_count = User.objects.filter(user_type="customer", no_of_post__lte=1).count()
         total_post_count = Post.objects.select_related('event', 'group').count()
-        total_resaller_count = User.objects.filter(no_of_post__gt=1).count()
+        total_resaller_count = User.objects.filter(no_of_post__gt=1, user_type="customer").count()
         total_category_count = Category.objects.filter(sub_category__isnull=True).count()
         total_sub_category_count = Category.objects.filter(sub_category__isnull=False).count()
         
