@@ -28,7 +28,7 @@ class User(AbstractUser, BaseModel):
     objects = UserManager()
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}({self.whatsapp_number})"
+        return f"{self.first_name})"
     
     def save(self, *args, **kwargs):
         if not self.username:
