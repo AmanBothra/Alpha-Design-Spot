@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 import random
+from django.db import IntegrityError
 
 from lib.constants import USER_TYPE, UserConstants
 from lib.helpers import rename_file_name, converter_to_webp
@@ -39,13 +40,18 @@ class User(AbstractUser, BaseModel):
         super(User, self).save(*args, **kwargs)
         
     def get_or_create_user_code(self, code_type=UserConstants.FORGOTTEN_PASSWORD):
-        user_code, created = UserCode.objects.get_or_create(
-            user=self, code_type=code_type, code=random.randint(1000, 9999)
-        )
-        if not created:
-            user_code.save()
+        try:
+            user_code, created = UserCode.objects.get_or_create(
+                user=self, code_type=code_type,
+                defaults={"code": random.randint(1000, 9999)}
+            )
+            if not created:
+                user_code.code = random.randint(1000, 9999)
+                user_code.save()
 
-        return user_code, created
+            return user_code, created
+        except IntegrityError:  # Handle the case when unique constraint is violated
+            return self.get_or_create_user_code(code_type)
         
         
 class UserCode(models.Model):
