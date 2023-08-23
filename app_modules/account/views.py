@@ -15,7 +15,7 @@ from .serializers import (
 )
 from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
 from app_modules.master.models import BusinessCategory
-from app_modules.post.models import Post, Category
+from app_modules.post.models import Post, Category, CustomerPostFrameMapping
 from lib.constants import UserConstants
 
 
@@ -83,6 +83,17 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     search_fields = ['group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name']
     filterset_fields = ['group__name', 'business_sub_category__name']
     
+    def perform_update(self, serializer):
+        instance = serializer.instance  # Get the current instance being updated
+        old_group_id = instance.group.id if instance.group else None  # Store the old group ID
+        serializer.save()
+        
+        if old_group_id:
+            new_post_group_wise = Post.objects.filter(group_id=instance.group)
+            old_post_mapping = CustomerPostFrameMapping.objects.filter(
+                customer=instance.customer,
+                customer_frame__group=old_group_id
+            )
 
 class UserProfileListApiView(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserProfileListSerializer
@@ -91,12 +102,21 @@ class UserProfileListApiView(viewsets.ReadOnlyModelViewSet):
     http_method_names = ['get']
 
     def get_queryset(self):
-        queryset = User.objects.all().exclude(is_superuser=True)
+        queryset = User.objects.all()
+        data = self.request.query_params.get('data', None)
         
-        recent = self.request.query_params.get('recent', None)
-        if recent:
+        if data == "recent":
             queryset = queryset.filter(user_type="customer").order_by('-date_joined')[:15]
         
+        if data == "admin":
+            queryset = User.objects.filter(user_type="admin")
+        
+        if data == "active":
+            queryset = User.objects.filter(user_type="customer", is_verify=True)
+            
+        if data == "inactive":
+            queryset = User.objects.filter(user_type="customer", is_verify=False)
+            
         return queryset
     
 

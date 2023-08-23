@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from rest_framework.views import APIView
 from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -80,7 +80,7 @@ class EventViewset(BaseModelViewSet):
 class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all()
     serializer_class = serializers.PostSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['group__name', 'event__name', 'file_type']
 
     def get_serializer_context(self):
@@ -96,7 +96,22 @@ class PostViewset(BaseModelViewSet):
             if existing_post:
                 raise ValidationError({"event": "A post with the same event and group already exists."})
 
-        return super().create(request, *args, **kwargs)
+        response =  super().create(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            group_name = None
+            if group_id:
+                group_name = Post.objects.get(id=response.data['id']).group.name
+
+            modified_data = response.data.copy()
+            if group_name:
+                modified_data["message"] = f"The Post for group '{group_name}' has been created successfully"
+            else:
+                modified_data["message"] = "The Post has been created successfully"
+
+            response.data = modified_data
+
+        return response
 
 
 class OtherPostViewset(BaseModelViewSet):
@@ -286,6 +301,13 @@ class DeletePastEventsView(APIView):
     def delete(self, request):
         today = date.today()
         events_to_delete = Event.objects.filter(event_date__lt=today)
+        for event in events_to_delete:
+            post_to_delete = Post.objects.filter(event=event)
+            for post in post_to_delete:
+                mapping_post_to_delete = CustomerOtherPostFrameMapping.objects.filter(post=post)
+            
+        post_to_delete.delete()
+        mapping_post_to_delete.delete()   
         events_to_delete.delete()
         return Response(
             {'message': 'Successfully deleted past events.'},
