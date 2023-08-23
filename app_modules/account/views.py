@@ -17,6 +17,7 @@ from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Sub
 from app_modules.master.models import BusinessCategory
 from app_modules.post.models import Post, Category, CustomerPostFrameMapping
 from lib.constants import UserConstants
+from lib.viewsets import BaseModelViewSet
 
 
 class RegistrationView(APIView):
@@ -95,7 +96,7 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
                 customer_frame__group=old_group_id
             )
 
-class UserProfileListApiView(viewsets.ReadOnlyModelViewSet):
+class UserProfileListApiView(BaseModelViewSet):
     serializer_class = UserProfileListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
