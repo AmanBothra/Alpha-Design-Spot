@@ -304,7 +304,7 @@ class DeletePastEventsView(APIView):
         for event in events_to_delete:
             post_to_delete = Post.objects.filter(event=event)
             for post in post_to_delete:
-                mapping_post_to_delete = CustomerOtherPostFrameMapping.objects.filter(post=post)
+                mapping_post_to_delete = CustomerPostFrameMapping.objects.filter(post=post)
             
         post_to_delete.delete()
         mapping_post_to_delete.delete()   
