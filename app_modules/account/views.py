@@ -100,7 +100,6 @@ class UserProfileListApiView(BaseModelViewSet):
     serializer_class = UserProfileListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
-    http_method_names = ['get']
 
     def get_queryset(self):
         queryset = User.objects.all()
