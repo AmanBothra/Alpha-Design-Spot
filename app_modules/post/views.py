@@ -19,7 +19,7 @@ from .filters import EventFilter
 
 
 class CategoeryViewset(BaseModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('-id')
     serializer_class = serializers.CategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = {
@@ -78,7 +78,7 @@ class EventViewset(BaseModelViewSet):
 
 
 class PostViewset(BaseModelViewSet):
-    queryset = Post.objects.select_related('event', 'group').all()
+    queryset = Post.objects.select_related('event', 'group').all().order_by('-id')
     serializer_class = serializers.PostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['group__name', 'event__name', 'file_type']
@@ -115,7 +115,7 @@ class PostViewset(BaseModelViewSet):
 
 
 class OtherPostViewset(BaseModelViewSet):
-    queryset = OtherPost.objects.select_related('category', 'group').all()
+    queryset = OtherPost.objects.select_related('category', 'group').all().order_by('-id')
     serializer_class = serializers.OtherPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['group__name', 'category__name', 'file_type']

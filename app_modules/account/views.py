@@ -78,7 +78,7 @@ class LoginView(APIView):
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
-    queryset = CustomerFrame.objects.all()
+    queryset = CustomerFrame.objects.all().order_by('-id')
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name']
