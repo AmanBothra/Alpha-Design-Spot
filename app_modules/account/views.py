@@ -96,13 +96,14 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
                 customer_frame__group=old_group_id
             )
 
+
 class UserProfileListApiView(BaseModelViewSet):
     serializer_class = UserProfileListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
 
     def get_queryset(self):
-        queryset = User.objects.all()
+        queryset = User.objects.all().order_by('-id')
         data = self.request.query_params.get('data', None)
         
         if data == "recent":
