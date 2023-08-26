@@ -8,6 +8,9 @@ router.register('customer-frame', views.CustomerFrameViewSet, basename="customer
 router.register('user-profile', views.UserProfileListApiView, basename='user-profile-list')
 router.register('customer-group', views.CustomerGroupViewSet, basename='customer-group')
 router.register('customer-subscription', views.SubscriptionViewSet, basename='customer-subscription')
+router.register('subscription-plan', views.PlanViewSet, basename='subscription-plan')
+router.register('payment-method', views.PaymentMethodViewSet, basename='payment-method')
+
 
 
 urlpatterns = [
