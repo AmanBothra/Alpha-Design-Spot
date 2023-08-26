@@ -61,8 +61,8 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         customer = validated_data.get('customer')
-        business_category = validated_data.get('business_category')
-        business_sub_category = validated_data.get('business_sub_category')
+        # business_category = validated_data.get('business_category')
+        # business_sub_category = validated_data.get('business_sub_category')
         
         no_of_post = customer.no_of_post
         existing_frame_count = CustomerFrame.objects.filter(customer=customer).count()
