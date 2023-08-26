@@ -67,6 +67,10 @@ class LoginView(APIView):
             current_date = date.today()
             
             expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
+            if expired_subscription:
+                is_expired = True
+            else:
+                is_expired = None
 
             return Response(
                 {
@@ -76,13 +80,13 @@ class LoginView(APIView):
                     'is_verify': user.is_verify,
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
-                    'is_expired': bool(expired_subscription),
+                    'is_expired': bool(is_expired),
                     'category_count': category_count,
                     'category_names': category_names
                 }
             )
         else:
-            raise exceptions.AuthenticationFailed('Invalid email or password')
+            raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
