@@ -4,7 +4,7 @@ from django.utils import timezone
 import random
 from django.db import IntegrityError
 
-from lib.constants import USER_TYPE, UserConstants
+from lib.constants import USER_TYPE, UserConstants, APP_TPE
 from lib.helpers import rename_file_name, converter_to_webp
 from .managers import UserManager
 from lib.models import BaseModel
@@ -167,4 +167,14 @@ class Subscription(BaseModel):
             converter_to_webp(self.file)
         super().save(*args, **kwargs)
     
+
+
+class AppVersion(BaseModel):
+    current_version = models.FloatField(default=0.0)
+    required_version = models.FloatField(default=0.0)
+    app_type = models.CharField(max_length=10, choices=APP_TPE, default='android')
     
+    def __str__(self) -> str:
+        return self.app_type
+    
+

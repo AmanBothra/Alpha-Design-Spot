@@ -10,6 +10,11 @@ FILE_TYPE = [
     ('video', 'video')
 ]
 
+APP_TPE = [
+    ('android', 'android'),
+    ('ios', 'ios')
+]
+
 
 class UserConstants:
     EMAIL_VERIFICATION, FORGOTTEN_PASSWORD, MOBILE_VERIFICATION = (

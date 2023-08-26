@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import (
-    User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription
+    User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription, AppVersion
 )
 
 
@@ -136,4 +136,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'order_number', 'user', 'frame', 'plan', 'plan_name', 'payment_method', 'start_date', 'end_date',
             'transaction_number', 'file', 'is_active'
+        ]
+        
+class AppVersionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppVersion
+        fields = [
+            'id', 'current_version', 'required_version', 'app_type'
         ]

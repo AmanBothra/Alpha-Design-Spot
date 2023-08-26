@@ -8,12 +8,15 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from django.core.mail import send_mail
 from django.conf import settings
+from datetime import date
+from django.db.models import Q
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
     UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
+    AppVersionSerializer
 )
-from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
+from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode, AppVersion
 from app_modules.master.models import BusinessCategory
 from app_modules.post.models import Post, Category, CustomerPostFrameMapping
 from lib.constants import UserConstants
@@ -60,6 +63,10 @@ class LoginView(APIView):
 
             category_names = [category.name for category in business_categories]
             category_count = len(category_names)
+            
+            current_date = date.today()
+            
+            expired_subscription = Subscription.objects.filter(end_date__lt=current_date)
 
             return Response(
                 {
@@ -69,6 +76,7 @@ class LoginView(APIView):
                     'is_verify': user.is_verify,
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
+                    'is_expired': bool(expired_subscription),
                     'category_count': category_count,
                     'category_names': category_names
                 }
@@ -261,6 +269,12 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     #     end_date = start_date + timedelta(days=(30 * duration_in_months))  # Assuming 30 days per month
     #     serializer.save(end_date=end_date)
 
+
+class AppVersionViewSet(BaseModelViewSet):
+    serializer_class = AppVersionSerializer
+    queryset = AppVersion.objects.all()
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['app_type']
 
 ## Dashboard API
 ###------------------------------------------
