@@ -66,7 +66,7 @@ class LoginView(APIView):
             
             current_date = date.today()
             
-            expired_subscription = Subscription.objects.filter(end_date__lt=current_date)
+            expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user)
 
             return Response(
                 {
