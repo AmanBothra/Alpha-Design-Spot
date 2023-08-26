@@ -134,6 +134,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = [
-            'id', 'order_number', 'user', 'plan', 'plan_name', 'payment_method', 'start_date', 'end_date',
+            'id', 'order_number', 'user', 'frame', 'plan', 'plan_name', 'payment_method', 'start_date', 'end_date',
             'transaction_number', 'file', 'is_active'
         ]
