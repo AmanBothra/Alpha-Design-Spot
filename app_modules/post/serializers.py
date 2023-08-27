@@ -35,6 +35,14 @@ class CategorySerializer(serializers.ModelSerializer):
             serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
             return serializer.data
         return []
+    
+
+class SubCategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'banner_image', 'is_active', 'is_featured']
+
    
                
 class EventSerializer(serializers.ModelSerializer):

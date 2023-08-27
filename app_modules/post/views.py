@@ -30,10 +30,6 @@ class CategoeryViewset(BaseModelViewSet):
         file_type = self.request.GET.get('file_type')
 
         queryset = super().get_queryset()
-        exclude_main_categories = self.request.query_params.get('exclude_main_categories', True)  # set by default true
-
-        if exclude_main_categories:
-            queryset = queryset.exclude(sub_category__isnull=False)
 
         if file_type:
             queryset = Category.objects.filter(other_post_categories__file_type=file_type).distinct()
@@ -45,9 +41,21 @@ class CategoeryViewset(BaseModelViewSet):
         subcategories = Category.objects.filter(sub_category=category)
         serializer = self.get_serializer(subcategories, many=True)
         return Response(serializer.data)
+    
+    
+class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Category.objects.exclude(sub_category__isnull=False)
+    serializer_class = serializers.SubCategorySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['name']
+    filterset_fields = {
+        'name': ["in", "exact"]
+    }
+    
+    
 
 
-class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class SubcategoryListViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
     serializer_class = serializers.SubcategorySerializer
     pagination_class = None
