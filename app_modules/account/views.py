@@ -8,8 +8,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from django.core.mail import send_mail
 from django.conf import settings
-from datetime import date
-from django.db.models import Q
+from datetime import date, timedelta
+from django.utils import timezone
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
@@ -107,13 +107,26 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
         instance = serializer.instance  # Get the current instance being updated
         old_group_id = instance.group.id if instance.group else None  # Store the old group ID
         serializer.save()
-        
+
         if old_group_id:
-            new_post_group_wise = Post.objects.filter(group_id=instance.group)
+            new_group = instance.group  # New group after update
+            new_post_group_wise = Post.objects.filter(group=new_group)
+            
             old_post_mapping = CustomerPostFrameMapping.objects.filter(
                 customer=instance.customer,
-                customer_frame__group=old_group_id
+                customer_frame__group_id=old_group_id
             )
+            
+            # Update CustomerPostFrameMapping entries with new_post_group_wise
+            for post_mapping in old_post_mapping:
+                post_mapping.customer_frame.group = new_group
+                post_mapping.customer_frame.save()
+
+                # Update post IDs related to new_group in CustomerPostFrameMapping
+                post_mapping.post = new_post_group_wise.get(event=post_mapping.post.event)
+                post_mapping.save()
+
+            return Response({'message': 'Customer frame updated successfully'}, status=status.HTTP_200_OK)
 
 
 class UserProfileListApiView(BaseModelViewSet):
@@ -204,6 +217,7 @@ class VerifyOTP(APIView):
         
         return Response({"message": "Email verification is successfully completed",},status=status.HTTP_200_OK)
 
+
 class SetNewPassword(APIView):
     permission_classes = [permissions.AllowAny]
     
@@ -261,25 +275,33 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
     
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
-    # queryset = Subscription.objects.all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'is_verify']
-    
+    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'is_active']
+
     def get_queryset(self):
         user = self.request.user
+        current_date = timezone.now().date()
+        queryset = Subscription.objects.all().select_related('user', 'plan', 'payment_method')
 
-        if user.is_staff:
-            return Subscription.objects.all().select_related('user', 'plan', 'payment_method')
-        else:
-            return Subscription.objects.filter(user=user).select_related('user', 'plan', 'payment_method')
-    
-    # def perform_create(self, serializer):
-    #     plan = serializer.validated_data['plan']
-    #     duration_in_months = plan.duration_in_months
-    #     start_date = serializer.validated_data['start_date']
-    #     end_date = start_date + timedelta(days=(30 * duration_in_months))  # Assuming 30 days per month
-    #     serializer.save(end_date=end_date)
+        # Apply filters based on query parameters
+        days_until_expiry = self.request.query_params.get('days_until_expiry')
+        expired = self.request.query_params.get('expired')
+        active = self.request.query_params.get('active')
 
+        if days_until_expiry:
+            next_10_days = current_date + timedelta(days=10)
+            queryset = queryset.filter(end_date__gte=current_date, end_date__lte=next_10_days)
+
+        if expired == 'true':
+            queryset = queryset.filter(end_date__lt=current_date)
+
+        if active == 'true':
+            queryset = queryset.filter(end_date__gte=current_date)
+
+        if not user.is_staff:
+            queryset = queryset.filter(user=user)
+
+        return queryset
 
 class AppVersionViewSet(BaseModelViewSet):
     serializer_class = AppVersionSerializer
@@ -287,8 +309,6 @@ class AppVersionViewSet(BaseModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['app_type']
 
-## Dashboard API
-###------------------------------------------
 
 class DashboardApi(APIView):
     
