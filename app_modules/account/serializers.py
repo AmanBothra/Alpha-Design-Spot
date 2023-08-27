@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from datetime import date
 
 from .models import (
     User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription, AppVersion
@@ -138,12 +139,28 @@ class PlanSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     plan_name = serializers.CharField(source="plan.name", read_only=True)
     payment_method = serializers.CharField(source="payment_method.name", read_only=True)
+    is_expired = serializers.SerializerMethodField()
+    days_left = serializers.SerializerMethodField()
+    
     class Meta:
         model = Subscription
         fields = [
             'id', 'order_number', 'user', 'frame', 'plan', 'plan_name', 'payment_method', 'start_date', 'end_date',
-            'transaction_number', 'file', 'is_active'
+            'transaction_number', 'file', 'is_active', 'is_expired', 'days_left'
         ]
+        
+    def get_is_expired(self, obj):
+        current_date = date.today()
+        
+        if obj.end_date < current_date:
+            return True
+        else:
+            return False
+        
+    def get_days_left(self, obj):
+        current_date = date.today()
+
+        return (obj.end_date - current_date).days
         
 class AppVersionSerializer(serializers.ModelSerializer):
     class Meta:
