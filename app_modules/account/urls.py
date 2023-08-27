@@ -14,6 +14,7 @@ router.register('app-version', views.AppVersionViewSet, basename='app-version')
 
 
 
+
 urlpatterns = [
     path('', include(router.urls)),
     path('register', views.RegistrationView.as_view(), name='register'),

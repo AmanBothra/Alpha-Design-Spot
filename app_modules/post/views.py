@@ -81,7 +81,7 @@ class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all().order_by('-id')
     serializer_class = serializers.PostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['group__name', 'event__name', 'file_type']
+    search_fields = ['group__name', 'event__name', 'file_type', 'event__date']
 
     def get_serializer_context(self):
         context = super(PostViewset, self).get_serializer_context()

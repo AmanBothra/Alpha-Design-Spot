@@ -97,10 +97,14 @@ class LoginView(APIView):
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
-    queryset = CustomerFrame.objects.all().order_by('-id')
+    queryset = CustomerFrame.objects.select_related(
+                    'customer', 'business_category', 'business_sub_category', 'group').all().order_by('-id')
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name']
+    search_fields = [
+        'group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name',
+        'display_name'
+    ]
     filterset_fields = ['group__name', 'business_sub_category__name']
     
     def perform_update(self, serializer):
@@ -251,7 +255,8 @@ class CustomerGroupListApiView(ListAPIView):
     
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
-    queryset  = CustomerFrame.objects.select_related('customer', 'group').all()
+    queryset = CustomerFrame.objects.select_related(
+        'customer', 'business_category', 'business_sub_category', 'group').all()
     serializer_class = CustomerFrameSerializer
     
     

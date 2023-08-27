@@ -56,16 +56,16 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerFrame
         fields = (
-            'id', 'customer', 'frame_img', 'group', 'group_name', 'mobile_number', 'business_category',
+            'id', 'customer', 'frame_img', 'group', 'group_name', 'display_name', 'mobile_number', 'business_category',
             'bussiness_category_name', 'business_sub_category', 'business_sub_category_name'
         )
         
     def create(self, validated_data):
         customer = validated_data.get('customer')
-        # display_name = validated_data.get('display_name')
+        display_name = validated_data.get('display_name')
         
-        # if display_name is None:
-        #     validated_data['display_name'] = validated_data['customer'].whatsapp_number
+        if display_name is None:
+            validated_data['display_name'] = validated_data['customer'].whatsapp_number
             
             
         # business_category = validated_data.get('business_category')

@@ -54,7 +54,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
     customer_detail = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Feedback
-        fields = ['id', 'feedback', 'customer_detail']
+        fields = ['id', 'feedback', 'customer_detail', 'added_on']
         
     def get_customer_detail(self, obj):
         return {
