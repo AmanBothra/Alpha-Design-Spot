@@ -55,7 +55,7 @@ class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     
 
 
-class SubcategoryListViewSet(BaseModelViewSet):
+class SubcategoryListViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
     serializer_class = serializers.SubcategorySerializer
     pagination_class = None
