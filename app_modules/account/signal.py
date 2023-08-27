@@ -8,37 +8,35 @@ from app_modules.post.models import (
     BusinessPostFrameMapping
 )
         
-# @receiver(post_save, sender=CustomerFrame)
-# def update_customer_frame_data(sender, instance, created, **kwargs):
-#     if not created:  # Only perform this on updates, not on new creations
-#         current_date = datetime.date.today()
-#         future_events = Event.objects.filter(event_date__gte=current_date)
-        
-#         existing_posts = Post.objects.select_related('event', 'group').filter(
-#             group=instance.group, event__in=future_events
-#         )
-        
-#         for post in existing_posts:
-#             mapping = CustomerPostFrameMapping.objects.filter(
-#                 customer_frame=instance,
-#                 post=post
-#             ).first()
+@receiver(post_save, sender=CustomerFrame)
+def mapping_customer_frame_with_post(sender, instance, created, **kwargs):
+    current_date = datetime.date.today()
+    future_events = Event.objects.filter(event_date__gte=current_date)
+    
+    existing_posts = Post.objects.select_related('event', 'group').filter(
+        group=instance.group, event__in=future_events
+    )
+    
+    for post in existing_posts:
+        mapping = CustomerPostFrameMapping.objects.filter(
+            customer_frame=instance,
+            post=post
+        ).first()
 
-#             if mapping:
-#                 # Update existing mapping
-#                 mapping.customer_frame = instance
-#                 if mapping.is_downloaded:
-#                     mapping.is_downloaded = False
-#                 mapping.save()
-#             else:
-#                 # Create new mapping
-#                 new_mapping = CustomerPostFrameMapping.objects.create(
-#                     customer=instance.customer,
-#                     post=post,
-#                     customer_frame=instance,
-#                     is_downloaded=False
-#                 )
-
+        if mapping:
+            # Update existing mapping
+            mapping.customer_frame = instance
+            if mapping.is_downloaded:
+                mapping.is_downloaded = False
+            mapping.save()
+        else:
+            # Create new mapping
+            new_mapping = CustomerPostFrameMapping.objects.create(
+                customer=instance.customer,
+                post=post,
+                customer_frame=instance,
+                is_downloaded=False
+            )
 
         
 @receiver(post_save, sender=CustomerFrame)

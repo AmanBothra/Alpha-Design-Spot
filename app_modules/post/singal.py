@@ -23,6 +23,8 @@ def mapping_post_with_customer_frame(sender, instance, created, **kwargs):
             )
             mapping.is_downloaded = False
             mapping.save()
+            
+            
 
 @receiver(post_save, sender=OtherPost)
 def mapping_other_post_with_customer_frame(sender, instance, created, **kwargs):
