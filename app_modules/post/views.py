@@ -48,7 +48,7 @@ class CategoeryViewset(BaseModelViewSet):
 
 
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.filter(sub_category__isnull=False)
+    queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
     serializer_class = serializers.SubcategorySerializer
     pagination_class = None
 
@@ -232,15 +232,24 @@ class EventListApiView(ListAPIView):
     serializer_class = serializers.EventSerializer
     
     def get_queryset(self):
+        event_type = self.request.query_params.get('event_type', None)
+        
         today = date.today()
-        queryset = Event.objects.filter(event_date__gte=today)
+        queryset = Event.objects.filter(event_date__gte=today).order_by('-id')
+        
+        if event_type == 'image':
+            queryset = queryset.filter(event_type='image')
+            
+        if event_type == 'video':
+            queryset = queryset.filter(event_type='video')
+            
         return queryset
-
+    
 
 class CategoryListApiView(ListAPIView):
     pagination_class = None
     serializer_class = serializers.CategorySerializer
-    queryset = Category.objects.select_related('sub_category').all()
+    queryset = Category.objects.select_related('sub_category').all().order_by('-id')
 
 
 @api_view(['POST'])

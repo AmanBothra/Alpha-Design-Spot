@@ -102,6 +102,8 @@ class CustomerFrame(BaseModel):
         related_name="customer_frame_group",
         null=True, blank=True    
     )
+    display_name = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    
     
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number}"
