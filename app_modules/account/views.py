@@ -69,8 +69,14 @@ class LoginView(APIView):
             expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
             if expired_subscription:
                 is_expired = True
+                days_left = None
             else:
-                is_expired = None
+                is_expired = False
+                if user.subscription_users.exists():
+                    subscription = user.subscription_users.latest('end_date')
+                    days_left = (subscription.end_date - current_date).days
+                else:
+                    days_left = None
 
             return Response(
                 {
@@ -81,6 +87,7 @@ class LoginView(APIView):
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
                     'is_expired': bool(is_expired),
+                    'days_left': days_left, 
                     'category_count': category_count,
                     'category_names': category_names
                 }
