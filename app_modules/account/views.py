@@ -251,7 +251,7 @@ class CustomerGroupListApiView(ListAPIView):
     
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
-    queryset  = CustomerFrame.objects.select_related('customer', 'group').all().order_by('-id')
+    queryset  = CustomerFrame.objects.select_related('customer', 'group').all()
     serializer_class = CustomerFrameSerializer
     
     
