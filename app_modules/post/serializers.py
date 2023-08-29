@@ -23,18 +23,18 @@ class SubcategorySerializer(serializers.ModelSerializer):
         
 
 class CategorySerializer(serializers.ModelSerializer):
-    # sub_categories = serializers.SerializerMethodField()
+    sub_categories = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'sub_category', 'banner_image', 'is_active', 'is_featured']
 
-    # def get_sub_categories(self, obj):
-    #     if not self.context.get('exclude_main_categories'):
-    #         sub_categories = Category.objects.filter(sub_category=obj)
-    #         serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
-    #         return serializer.data
-    #     return []
+    def get_sub_categories(self, obj):
+        if not self.context.get('exclude_main_categories'):
+            sub_categories = Category.objects.filter(sub_category=obj)
+            serializer = SubcategorySerializer(sub_categories, many=True, context=self.context)
+            return serializer.data
+        return []
     
 
 class SubCategorySerializer(serializers.ModelSerializer):
