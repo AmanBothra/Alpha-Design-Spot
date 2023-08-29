@@ -27,7 +27,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'sub_category', 'banner_image', 'is_active', 'is_featured']
+        fields = ['id', 'name', 'sub_category', 'sub_categories', 'banner_image', 'is_active', 'is_featured']
 
     def get_sub_categories(self, obj):
         if not self.context.get('exclude_main_categories'):
