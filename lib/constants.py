@@ -15,6 +15,10 @@ APP_TPE = [
     ('ios', 'ios')
 ]
 
+PROFESSION_TYPE = [
+    ('business', 'business'),
+    ('political', 'political')
+]
 
 class UserConstants:
     EMAIL_VERIFICATION, FORGOTTEN_PASSWORD, MOBILE_VERIFICATION = (

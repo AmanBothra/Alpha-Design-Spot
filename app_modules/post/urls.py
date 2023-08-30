@@ -5,6 +5,9 @@ from rest_framework import routers
 router = routers.DefaultRouter(trailing_slash=False)
 
 router.register('category', views.CategoeryViewset, basename='category')
+router.register('category', views.CategoeryViewset, basename='category')
+router.register('business-category', views.BusinessCategoeryViewset, basename='business-category')
+router.register('business-category-list', views.BusinessCategoryList, basename='business-category-list')
 router.register('sub-categories', views.SubcategoryViewSet, basename='sub-categories')
 router.register('event', views.EventViewset, basename='event')
 router.register('post', views.PostViewset, basename='post')

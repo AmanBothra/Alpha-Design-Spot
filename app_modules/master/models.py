@@ -49,18 +49,6 @@ class Feedback(BaseModel):
         return self.customer.whatsapp_number
     
 
-class BusinessCategory(BaseModel):
-    name = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    sub_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
-    thumbnail = models.FileField(upload_to=rename_file_name('business_category_thumbnail/'), null=True)
-    
-    def __str__(self) -> str:
-        return self.name
-    
-    
-    def save(self, *args, **kwargs):
-        if self.thumbnail:
-            converter_to_webp(self.thumbnail)
-        super().save(*args, **kwargs)
+
 
 

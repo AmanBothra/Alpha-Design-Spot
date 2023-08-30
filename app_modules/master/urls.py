@@ -12,7 +12,6 @@ router.register(r'about', views.AboutViewSet, basename='about')
 router.register(r'privacy-policy', views.PrivacyPolicyViewSet, basename='privacy-policy')
 router.register(r'terms-and-condition', views.TermsAndConditionViewSet, basename='terms-and-condition')
 router.register(r'feedback', views.FeedbackViewSet, basename='feedback')
-router.register('business-category', views.BusinessCategoeryViewset, basename='business-category')
 
 urlpatterns = [
     # Your existing URL patterns

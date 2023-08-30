@@ -21,6 +21,8 @@ admin.site.register(CustomerPostFrameMapping, CustomerPostFrameMappingAdmin)
 admin.site.register(CustomerOtherPostFrameMapping)
 admin.site.register(BusinessPost)
 admin.site.register(BusinessPostFrameMapping)
+admin.site.register(BusinessCategory)
+
 
 
                     

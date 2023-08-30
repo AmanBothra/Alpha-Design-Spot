@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from app_modules.master.models import (
     Banner, BirthdayPost, SplashScreen, Tutorials, About, PrivacyPolicy, TermsAndCondition, Feedback,
-    BusinessCategory
 )
 
 
@@ -61,11 +60,3 @@ class FeedbackSerializer(serializers.ModelSerializer):
             "number": obj.customer.whatsapp_number,
             "name": f"{obj.customer.first_name} {obj.customer.last_name}",
         }
-
-
-class BusinessCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BusinessCategory
-        fields = [
-            'id', 'name', 'sub_category', 'thumbnail'
-        ]

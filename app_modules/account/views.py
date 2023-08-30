@@ -17,10 +17,10 @@ from .serializers import (
     AppVersionSerializer
 )
 from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode, AppVersion
-from app_modules.master.models import BusinessCategory
-from app_modules.post.models import Post, Category, CustomerPostFrameMapping
+from app_modules.post.models import Post, Category, CustomerPostFrameMapping, BusinessCategory
 from lib.constants import UserConstants
 from lib.viewsets import BaseModelViewSet
+
 
 
 class RegistrationView(APIView):
@@ -57,12 +57,12 @@ class LoginView(APIView):
             customer_frame = CustomerFrame.objects.filter(customer=user).first()
             is_a_group = customer_frame.is_a_group() if customer_frame else False
 
-            business_categories = BusinessCategory.objects.filter(
-                business_category_frames__customer=user
-            ).distinct()
+            # business_categories = BusinessCategory.objects.filter(
+            #     business_category_frames__customer=user
+            # ).distinct()
 
-            category_names = [category.name for category in business_categories]
-            category_count = len(category_names)
+            # category_names = [category.name for category in business_categories]
+            # category_count = len(category_names)
             
             current_date = date.today()
             
@@ -88,8 +88,8 @@ class LoginView(APIView):
                     'is_a_group': is_a_group,
                     'is_expired': bool(is_expired),
                     'days_left': days_left, 
-                    'category_count': category_count,
-                    'category_names': category_names
+                    # 'category_count': category_count,
+                    # 'category_names': category_names
                 }
             )
         else:
@@ -98,39 +98,46 @@ class LoginView(APIView):
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.select_related(
-                    'customer', 'business_category', 'business_sub_category', 'group').all().order_by('-id')
+                    'customer', 'business_category', 'group').all().order_by('-id')
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
-        'group__name', 'customer__whatsapp_number', 'business_category__name', 'business_sub_category__name',
+        'group__name', 'customer__whatsapp_number', 'business_category__name', 'profession_type',
         'display_name'
     ]
-    filterset_fields = ['group__name', 'business_sub_category__name']
+    filterset_fields = ['group__name', 'profession_type']
     
     def perform_update(self, serializer):
-        instance = serializer.instance  # Get the current instance being updated
-        old_group_id = instance.group.id if instance.group else None  # Store the old group ID
+        instance = serializer.instance
+        old_group_id = instance.group.id if instance.group else None
         serializer.save()
 
         if old_group_id:
-            new_group = instance.group  # New group after update
-            new_post_group_wise = Post.objects.filter(group=new_group)
-            
+            new_group = instance.group.id
+            new_post_group_wise = Post.objects.filter(group_id=new_group)
             old_post_mapping = CustomerPostFrameMapping.objects.filter(
-                customer=instance.customer,
-                customer_frame__group_id=old_group_id
+                customer=instance.customer, customer_frame__group_id=old_group_id
             )
             
-            # Update CustomerPostFrameMapping entries with new_post_group_wise
+            # Collect updated data
+            updated_data = []
             for post_mapping in old_post_mapping:
-                post_mapping.customer_frame.group = new_group
-                post_mapping.customer_frame.save()
+                updated_data.append(
+                    CustomerPostFrameMapping(
+                        id=post_mapping.id,
+                        customer_frame_id=post_mapping.customer_frame_id,
+                        post_id=new_post_group_wise.get(event=post_mapping.post.event).id
+                    )
+                )
+                
+            # Perform bulk update
+            CustomerPostFrameMapping.objects.bulk_update(
+                updated_data,
+                ['customer_frame_id', 'post_id'],
+                batch_size=100  # Adjust batch size as needed
+            )
 
-                # Update post IDs related to new_group in CustomerPostFrameMapping
-                post_mapping.post = new_post_group_wise.get(event=post_mapping.post.event)
-                post_mapping.save()
-
-            return Response({'message': 'Customer frame updated successfully'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Customer frame updated successfully'})
 
 
 class UserProfileListApiView(BaseModelViewSet):
@@ -256,7 +263,7 @@ class CustomerGroupListApiView(ListAPIView):
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
     queryset = CustomerFrame.objects.select_related(
-        'customer', 'business_category', 'business_sub_category', 'group').all()
+        'customer', 'business_category', 'group').all()
     serializer_class = CustomerFrameSerializer
     
     

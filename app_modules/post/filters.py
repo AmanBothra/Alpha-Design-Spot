@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from django_filters.filters import OrderingFilter
-from app_modules.post.models import Event
+from app_modules.post.models import Event, BusinessCategory
 
 class EventFilter(filters.FilterSet):
     ordering = OrderingFilter(

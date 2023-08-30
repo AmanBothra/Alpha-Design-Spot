@@ -1,10 +1,9 @@
 from account.models import User, CustomerFrame, CustomerGroup
 from django.db import models
 
-from lib.constants import FILE_TYPE
+from lib.constants import FILE_TYPE, PROFESSION_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
 from lib.models import BaseModel
-from app_modules.master.models import BusinessCategory
 
 
 class Category(BaseModel):
@@ -76,14 +75,25 @@ class OtherPost(BaseModel):
             converter_to_webp(self.file)
         super().save(*args, **kwargs)
         
-        
+   
+class BusinessCategory(BaseModel):
+    profession_type = models.CharField(max_length=20, choices=PROFESSION_TYPE)
+    name = models.CharField(max_length=100, unique=True)
+    thumbnail = models.FileField(upload_to=rename_file_name('business_category_thumbnail/'))
+    
+    def __str__(self) -> str:
+        return self.name
+    
+    
+    def save(self, *args, **kwargs):
+        if self.thumbnail:
+            converter_to_webp(self.thumbnail)
+        super().save(*args, **kwargs)   
+
+
+     
 class BusinessPost(BaseModel):
-    business_category = models.ForeignKey(
-        BusinessCategory,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name="business_category_posts"
-    )
+    
     business_sub_category = models.ForeignKey(
         BusinessCategory,
         null=True, blank=True,

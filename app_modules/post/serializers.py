@@ -4,7 +4,7 @@ from django.utils import timezone
 from account.models import CustomerFrame
 from .models import (
     Category, Post, Event, OtherPost, CustomerPostFrameMapping, CustomerOtherPostFrameMapping,
-    BusinessPost, BusinessPostFrameMapping
+    BusinessPost, BusinessPostFrameMapping, BusinessCategory
 )
 
 
@@ -36,6 +36,20 @@ class CategorySerializer(serializers.ModelSerializer):
             return serializer.data
         return []
     
+
+class BusinessCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BusinessCategory
+        fields = [
+            'id', 'profession_type', 'name', 'thumbnail'
+        ]
+        
+    
+    def validate_name(self, value):
+        if BusinessCategory.objects.filter(name__icontains=value).exists():
+            raise serializers.ValidationError("A BusinessCategory with this name already exists.")
+        return value
+
 
 class SubCategorySerializer(serializers.ModelSerializer):
 
@@ -192,9 +206,7 @@ class CustomerOtherPostFrameMappingSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
-        
-        
-        
+               
         
 class BusinessPostFrameMappingSerializer(serializers.ModelSerializer):
     post_image = serializers.FileField(source="post.file", read_only=True)

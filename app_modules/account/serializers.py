@@ -50,65 +50,61 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 class CustomerFrameSerializer(serializers.ModelSerializer):
     group_name = serializers.SerializerMethodField()
     mobile_number = serializers.SerializerMethodField()
-    bussiness_category_name = serializers.SerializerMethodField()
-    business_sub_category_name = serializers.SerializerMethodField()
+    business_category_name = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomerFrame
         fields = (
             'id', 'customer', 'frame_img', 'group', 'group_name', 'display_name', 'mobile_number', 'business_category',
-            'bussiness_category_name', 'business_sub_category', 'business_sub_category_name'
+            'profession_type', 'business_category_name'
         )
         
     def create(self, validated_data):
         customer = validated_data.get('customer')
+        business_category = validated_data.get('business_category')
         display_name = validated_data.get('display_name')
-        
-        if display_name is None:
-            validated_data['display_name'] = validated_data['customer'].whatsapp_number
-            
-            
-        # business_category = validated_data.get('business_category')
-        # business_sub_category = validated_data.get('business_sub_category')
-        
+        profession_type = validated_data.get('profession_type')
         no_of_post = customer.no_of_post
+        
+        
+        if display_name:
+            existing_frame_with_display_name = CustomerFrame.objects.filter(
+                customer=customer,
+                display_name=display_name
+            ).first()
+            if existing_frame_with_display_name:
+                raise serializers.ValidationError(
+                    {"display_name": f"This display name is already assigned to another customer frame."}
+                )
+            
         existing_frame_count = CustomerFrame.objects.filter(customer=customer).count()
         if existing_frame_count >= no_of_post:
             raise serializers.ValidationError({"customer": f"The customer has already reached the maximum number of posts {no_of_post}."})
         
-        # existing_frame = CustomerFrame.objects.filter(
-        #     customer=customer,
-        #     business_category=business_category,
-        #     business_sub_category=business_sub_category
-        # ).first()
-        
-        # if existing_frame:
-        #     raise serializers.ValidationError(
-        #         {"customer": f"This {business_category.name} and {business_sub_category.name} already assigned to the customer."}
-        #     )
+        if display_name and profession_type:
+            existing_frame = CustomerFrame.objects.filter(
+                customer=customer,
+                business_category=business_category,
+                profession_type=profession_type
+            ).first()
+            
+            if existing_frame:
+                raise serializers.ValidationError(
+                    {"customer": f"This {business_category.name} and {profession_type} already assigned to the customer."}
+                )
         
         return super().create(validated_data)
         
     def get_group_name(self, obj):
-        if obj.group:
-            return obj.group.name
-        else:
-            return None
+        return getattr(obj.group, 'name', None)
+
+    def get_business_category_name(self, obj):
+        return getattr(obj.business_category, 'name', None)
         
     def get_mobile_number(self, obj):
         return obj.customer.whatsapp_number
     
-    def get_bussiness_category_name(self, obj):
-        if obj.business_category:
-            return obj.business_category.name
-        else:
-            return None 
         
-    def get_business_sub_category_name(self, obj):
-        if obj.business_sub_category:
-            return obj.business_sub_category.name
-        else:
-            return None
         
         
 class CustomerGroupSerializer(serializers.ModelSerializer):

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from app_modules.post import serializers
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, \
-    CustomerOtherPostFrameMapping, BusinessPost, BusinessPostFrameMapping
+    CustomerOtherPostFrameMapping, BusinessPost, BusinessPostFrameMapping, BusinessCategory
 from lib.helpers import generate_video_with_frame
 from lib.viewsets import BaseModelViewSet
 from .filters import EventFilter
@@ -32,7 +32,6 @@ class CategoeryViewset(BaseModelViewSet):
         exclude_main_categories = self.request.query_params.get('exclude_main_categories')
 
         if exclude_main_categories == "false":
-            print("enter")
             queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
             
         if file_type:
@@ -47,12 +46,27 @@ class CategoeryViewset(BaseModelViewSet):
         return Response(serializer.data)
     
     
-
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
     serializer_class = serializers.SubcategorySerializer
     pagination_class = None
 
+
+class BusinessCategoeryViewset(BaseModelViewSet):
+    queryset = BusinessCategory.objects.all().order_by('-id')
+    serializer_class = serializers.BusinessCategorySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ('name', 'profession_type')
+    
+
+class BusinessCategoryList(viewsets.ReadOnlyModelViewSet):
+    queryset = BusinessCategory.objects.all().order_by('-id')
+    serializer_class = serializers.BusinessCategorySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    search_fields = ('name', 'profession_type')
+    pagination_class = None
+    
+    
 
 class EventViewset(BaseModelViewSet):
     # queryset = Event.objects.all()

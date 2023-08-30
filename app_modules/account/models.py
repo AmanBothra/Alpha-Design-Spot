@@ -4,11 +4,11 @@ from django.utils import timezone
 import random
 from django.db import IntegrityError
 
-from lib.constants import USER_TYPE, UserConstants, APP_TPE
+from lib.constants import USER_TYPE, UserConstants, APP_TPE, PROFESSION_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
 from .managers import UserManager
 from lib.models import BaseModel
-from app_modules.master.models import BusinessCategory
+
 
 
 class User(AbstractUser, BaseModel):
@@ -80,17 +80,12 @@ class CustomerGroup(BaseModel):
 
 class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
+    profession_type = models.CharField(max_length=100, choices=PROFESSION_TYPE, null=True, blank=True)
     business_category = models.ForeignKey(
-        BusinessCategory,
+        "post.BusinessCategory",
         null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name="business_category_frames"
-    )
-    business_sub_category = models.ForeignKey(
-        BusinessCategory,
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
-        related_name="business_sub_category_frames"
     )
     frame_img = models.FileField(
         upload_to=rename_file_name('customer_frame/'),
@@ -102,7 +97,7 @@ class CustomerFrame(BaseModel):
         related_name="customer_frame_group",
         null=True, blank=True    
     )
-    display_name = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    display_name = models.CharField(max_length=20, null=True, blank=True)
     
     
     def __str__(self) -> str:
