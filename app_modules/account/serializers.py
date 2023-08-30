@@ -134,7 +134,7 @@ class PlanSerializer(serializers.ModelSerializer):
         
 class SubscriptionSerializer(serializers.ModelSerializer):
     plan_name = serializers.CharField(source="plan.name", read_only=True)
-    payment_method = serializers.CharField(source="payment_method.name", read_only=True)
+    payment_method_name = serializers.CharField(source="payment_method.name", read_only=True)
     is_expired = serializers.SerializerMethodField()
     days_left = serializers.SerializerMethodField()
     customer_name = serializers.CharField(source="user.first_name", read_only=True)
@@ -145,7 +145,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'order_number', 'user', 'customer_name', 'frame', 'plan', 'plan_name', 'payment_method',
             'start_date', 'end_date', 'transaction_number', 'file', 'is_active', 'is_expired', 'days_left',
-            'display_name'
+            'display_name', 'payment_method_name'
         ]
         
     def __init__(self, *args, **kwargs):

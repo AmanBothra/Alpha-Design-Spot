@@ -133,9 +133,14 @@ class Plan(BaseModel):
 def order_number():
     last_subscription = Subscription.objects.all().order_by('id').last()
     if not last_subscription:
-         return 'ADS1001'
+        return 'ADS1001'
+    
     order_no = last_subscription.order_number
-    order_int = int(order_no[3:])
+    try:
+        order_int = int(order_no[3:])
+    except ValueError:
+        return 'ADS1001'
+    
     new_order_int = order_int + 1
     new_order_no = f'ADS{new_order_int:04}'
     return new_order_no
