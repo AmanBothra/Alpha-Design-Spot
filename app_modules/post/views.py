@@ -65,8 +65,7 @@ class BusinessCategoryList(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ('name', 'profession_type')
     pagination_class = None
-    
-    
+
 
 class EventViewset(BaseModelViewSet):
     # queryset = Event.objects.all()

@@ -137,26 +137,28 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     payment_method = serializers.CharField(source="payment_method.name", read_only=True)
     is_expired = serializers.SerializerMethodField()
     days_left = serializers.SerializerMethodField()
+    customer_name = serializers.CharField(source="user.first_name", read_only=True)
+    display_name = serializers.CharField(source="frame.display_name", read_only=True)
     
     class Meta:
         model = Subscription
         fields = [
-            'id', 'order_number', 'user', 'frame', 'plan', 'plan_name', 'payment_method', 'start_date', 'end_date',
-            'transaction_number', 'file', 'is_active', 'is_expired', 'days_left'
+            'id', 'order_number', 'user', 'customer_name', 'frame', 'plan', 'plan_name', 'payment_method',
+            'start_date', 'end_date', 'transaction_number', 'file', 'is_active', 'is_expired', 'days_left'
         ]
         
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_date = date.today()
+        
+        
     def get_is_expired(self, obj):
-        current_date = date.today()
-        
-        if obj.end_date < current_date:
-            return True
-        else:
-            return False
-        
-    def get_days_left(self, obj):
-        current_date = date.today()
+        return obj.end_date < self.current_date
 
-        return (obj.end_date - current_date).days
+    def get_days_left(self, obj):
+        return (obj.end_date - self.current_date).days
+    
+    
         
 class AppVersionSerializer(serializers.ModelSerializer):
     class Meta:

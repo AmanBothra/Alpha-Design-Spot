@@ -262,9 +262,18 @@ class CustomerGroupListApiView(ListAPIView):
     
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
-    queryset = CustomerFrame.objects.select_related(
-        'customer', 'business_category', 'group').all()
     serializer_class = CustomerFrameSerializer
+    
+    def get_queryset(self):
+        queryset = CustomerFrame.objects.select_related(
+            'customer', 'business_category', 'group').all()
+        
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(customer_id=user_id)
+            
+        return queryset
+        
     
     
 class CustomerListApiView(ListAPIView):
@@ -288,7 +297,10 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['order_number', 'user__whatsapp_number', 'email', 'is_active']
+    search_fields = [
+        'order_number', 'user__whatsapp_number', 'frame__display_name', 'transaction_number',
+        'payment_method__name', 'plan__name'
+    ]
 
     def get_queryset(self):
         user = self.request.user
