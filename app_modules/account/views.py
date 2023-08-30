@@ -54,42 +54,34 @@ class LoginView(APIView):
             
             customer_frame = CustomerFrame.objects.filter(customer=user).first()
             is_a_group = customer_frame.is_a_group() if customer_frame else False
-
-            # business_categories = BusinessCategory.objects.filter(
-            #     business_category_frames__customer=user
-            # ).distinct()
-
-            # category_names = [category.name for category in business_categories]
-            # category_count = len(category_names)
             
-            current_date = date.today()
+            current_date = timezone.now().date()
             
             expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
             if expired_subscription:
                 is_expired = True
                 days_left = None
             else:
-                is_expired = False
-                if user.subscription_users.exists():
-                    subscription = user.subscription_users.latest('end_date')
-                    days_left = (subscription.end_date - current_date).days
+                active_subscription = user.subscription_users.filter(end_date__gte=current_date).first()
+                if active_subscription:
+                    days_left = (active_subscription.end_date - current_date).days
+                    is_expired = False
                 else:
                     days_left = None
+                    is_expired = False
 
-            return Response(
-                {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                    'id': user.id,
-                    'is_verify': user.is_verify,
-                    'is_customer': bool(user.no_of_post <= 1),
-                    'is_a_group': is_a_group,
-                    'is_expired': bool(is_expired),
-                    'days_left': days_left, 
-                    # 'category_count': category_count,
-                    # 'category_names': category_names
-                }
-            )
+            response_data = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'id': user.id,
+                'is_verify': user.is_verify,
+                'is_customer': user.no_of_post <= 1,
+                'is_a_group': is_a_group,
+                'is_expired': is_expired,
+                'days_left': days_left, 
+            }
+
+            return Response(response_data)
         else:
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
