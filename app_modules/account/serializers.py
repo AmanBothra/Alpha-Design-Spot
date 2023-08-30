@@ -144,7 +144,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = Subscription
         fields = [
             'id', 'order_number', 'user', 'customer_name', 'frame', 'plan', 'plan_name', 'payment_method',
-            'start_date', 'end_date', 'transaction_number', 'file', 'is_active', 'is_expired', 'days_left'
+            'start_date', 'end_date', 'transaction_number', 'file', 'is_active', 'is_expired', 'days_left',
+            'display_name'
         ]
         
     def __init__(self, *args, **kwargs):
