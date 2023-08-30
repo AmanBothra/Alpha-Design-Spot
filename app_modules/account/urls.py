@@ -10,10 +10,6 @@ router.register('customer-group', views.CustomerGroupViewSet, basename='customer
 router.register('customer-subscription', views.SubscriptionViewSet, basename='customer-subscription')
 router.register('subscription-plan', views.PlanViewSet, basename='subscription-plan')
 router.register('payment-method', views.PaymentMethodViewSet, basename='payment-method')
-router.register('app-version', views.AppVersionViewSet, basename='app-version')
-
-
-
 
 urlpatterns = [
     path('', include(router.urls)),

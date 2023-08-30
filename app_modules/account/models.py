@@ -112,8 +112,7 @@ class CustomerFrame(BaseModel):
         # Check if the group name starts with 'A'
         return self.group.name.startswith('A') if self.group else False
 
-    
-    
+      
 class PaymentMethod(models.Model):
     name = models.CharField(max_length=100, unique=True)
     
@@ -168,15 +167,3 @@ class Subscription(BaseModel):
         if self.file:
             converter_to_webp(self.file)
         super().save(*args, **kwargs)
-    
-
-
-class AppVersion(BaseModel):
-    current_version = models.FloatField(default=0.0)
-    required_version = models.FloatField(default=0.0)
-    app_type = models.CharField(max_length=10, choices=APP_TPE, default='android')
-    
-    def __str__(self) -> str:
-        return self.app_type
-    
-

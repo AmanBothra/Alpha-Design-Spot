@@ -69,25 +69,21 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
             
             
 
-# @receiver(post_save, sender=CustomerFrame)
-# def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
-#     if not created: 
-#         customer = instance.customer
-#         customer_group = instance.group
-#         profession_type = instance.profession_type
-#         business_category = instance.business_category
+@receiver(post_save, sender=CustomerFrame)
+def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
+    if created:  # Only proceed if the instance is newly created
+        customer = instance.customer
+        customer_group = instance.group
+        profession_type = instance.profession_type
+        business_category = instance.business_category
         
-#         business_posts = BusinessPost.objects.filter(
-#             business_category=business_category, profession_type=profession_type
-#         ).select_related('business_category')
+        business_posts = BusinessPost.objects.filter(
+            business_category=business_category, profession_type=profession_type, group=customer_group
+        ).select_related('business_category', 'group')
 
-#         for business_post in business_posts:
-#             mapping, created = BusinessPostFrameMapping.objects.get_or_create(
-#                 customer=customer,
-#                 post=business_post,
-#                 defaults={'customer_frame': instance}
-#             )
-
-#             if not created:
-#                 mapping.customer_frame = instance
-#                 mapping.save()
+        for business_post in business_posts:
+            mapping, _ = BusinessPostFrameMapping.objects.get_or_create(
+                customer=customer,
+                post=business_post,
+                defaults={'customer_frame': instance}
+            )

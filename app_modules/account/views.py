@@ -14,13 +14,11 @@ from django.utils import timezone
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
     UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
-    AppVersionSerializer
 )
-from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode, AppVersion
+from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
 from app_modules.post.models import Post, Category, CustomerPostFrameMapping, BusinessCategory
 from lib.constants import UserConstants
 from lib.viewsets import BaseModelViewSet
-
 
 
 class RegistrationView(APIView):
@@ -326,13 +324,6 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=user)
 
         return queryset
-
-class AppVersionViewSet(BaseModelViewSet):
-    serializer_class = AppVersionSerializer
-    queryset = AppVersion.objects.all()
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['app_type']
-
 
 class DashboardApi(APIView):
     

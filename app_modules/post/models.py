@@ -50,6 +50,11 @@ class Post(BaseModel):
 
     def __str__(self) -> str:
         return self.event.name
+    
+    def save(self, *args, **kwargs):
+        if self.file_type == 'image':
+            converter_to_webp(self.file)
+        super().save(*args, **kwargs)
 
 
 class OtherPost(BaseModel):
@@ -63,15 +68,12 @@ class OtherPost(BaseModel):
         related_name="customer_other_post_group",
         null=True, blank=True
     )
-    thumbnail = models.FileField(upload_to=rename_file_name('other-post_thumb/'), blank=True, null=True)
 
     def __str__(self) -> str:
         return self.name
 
     def save(self, *args, **kwargs):
-        if self.thumbnail:
-            converter_to_webp(self.thumbnail)
-        if self.file_type == "image" and self.file:
+        if self.file_type == "image":
             converter_to_webp(self.file)
         super().save(*args, **kwargs)
         
@@ -90,11 +92,10 @@ class BusinessCategory(BaseModel):
             converter_to_webp(self.thumbnail)
         super().save(*args, **kwargs)   
 
-
      
 class BusinessPost(BaseModel):
-    
-    business_sub_category = models.ForeignKey(
+    profession_type = models.CharField(max_length=20, choices=PROFESSION_TYPE, null=True, blank=True)
+    business_category = models.ForeignKey(
         BusinessCategory,
         null=True, blank=True,
         on_delete=models.SET_NULL,
@@ -110,7 +111,7 @@ class BusinessPost(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"Category is {self.business_category.name} and sub_category is {self.business_sub_category.name}"
+        return f"Category is {self.business_category.name} and Profession is {self.profession_type}"
 
 
 class CustomerPostFrameMapping(BaseModel):

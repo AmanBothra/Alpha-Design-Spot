@@ -139,35 +139,22 @@ class BusinessPostViewset(BaseModelViewSet):
     serializer_class = serializers.BusinessPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = [
-        'group__name','file_type', 'business_category__name', 'business_sub_category__name'
+        'group__name','file_type', 'business_category__name', 'profession_type'
     ]
     
     def get_queryset(self):
         file_type = self.request.query_params.get('file_type')
-        queryset = BusinessPost.objects.select_related('business_category', 'business_sub_category', 'group').all()
-        
-        if file_type == "image":
+        queryset = BusinessPost.objects.select_related('business_category', 'group').all()
+
+        if file_type in ["image", "video"]:
             queryset = queryset.filter(file_type=file_type)
-        if file_type == "video":
-            queryset = queryset.filter(file_type=file_type)
+
         return queryset
-        
-    
 
     def get_serializer_context(self):
         context = super(BusinessPostViewset, self).get_serializer_context()
         return context
 
-    def create(self, request, *args, **kwargs):
-        event_id = request.data.get('event')
-        group_id = request.data.get('group')
-
-        if event_id and group_id:
-            existing_post = BusinessPostViewset.objects.filter(event_id=event_id, group_id=group_id).exists()
-            if existing_post:
-                raise ValidationError({"event": "A post with the same event and group already exists."})
-
-        return super().create(request, *args, **kwargs)
 
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):

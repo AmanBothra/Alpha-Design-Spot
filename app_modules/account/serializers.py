@@ -2,7 +2,7 @@ from rest_framework import serializers
 from datetime import date
 
 from .models import (
-    User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription, AppVersion
+    User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription
 )
 
 
@@ -105,8 +105,6 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         return obj.customer.whatsapp_number
     
         
-        
-        
 class CustomerGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerGroup
@@ -158,12 +156,3 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_days_left(self, obj):
         return (obj.end_date - self.current_date).days
-    
-    
-        
-class AppVersionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AppVersion
-        fields = [
-            'id', 'current_version', 'required_version', 'app_type'
-        ]
