@@ -184,4 +184,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return obj.end_date < self.current_date
 
     def get_days_left(self, obj):
-        return (obj.end_date - self.current_date).days
+        days_left = (obj.end_date - self.current_date).days
+        if days_left < 0:
+            return 0
+        return days_left
