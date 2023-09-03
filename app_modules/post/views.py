@@ -15,7 +15,7 @@ from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPo
     CustomerOtherPostFrameMapping, BusinessPost, BusinessPostFrameMapping, BusinessCategory
 from lib.helpers import generate_video_with_frame
 from lib.viewsets import BaseModelViewSet
-from .filters import EventFilter
+from .filters import EventFilter, BusinessPostFilter
 
 
 class CategoeryViewset(BaseModelViewSet):
@@ -43,7 +43,7 @@ class CategoeryViewset(BaseModelViewSet):
         category = self.get_object()
         subcategories = Category.objects.filter(sub_category=category)
         serializer = self.get_serializer(subcategories, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data)      
     
     
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -141,6 +141,7 @@ class BusinessPostViewset(BaseModelViewSet):
     search_fields = [
         'group__name','file_type', 'business_category__name', 'profession_type'
     ]
+    filterset_class = BusinessPostFilter
     
     def get_queryset(self):
         file_type = self.request.query_params.get('file_type')

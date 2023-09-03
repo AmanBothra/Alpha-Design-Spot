@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 from django_filters.filters import OrderingFilter
-from app_modules.post.models import Event, BusinessCategory
+from app_modules.post.models import Event, BusinessPost
 
 class EventFilter(filters.FilterSet):
     ordering = OrderingFilter(
@@ -13,3 +13,17 @@ class EventFilter(filters.FilterSet):
     class Meta:
         model = Event
         fields = ('event_date', 'name', 'ordering')
+        
+        
+
+class BusinessPostFilter(filters.FilterSet):
+    ordering = OrderingFilter(
+        fields=(
+            ('profession_type', 'profession_type'),
+            ('file_type', 'file_type'),
+        ),
+    )
+
+    class Meta:
+        model = BusinessPost
+        fields = ('profession_type', 'file_type')

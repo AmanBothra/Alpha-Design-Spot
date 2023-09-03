@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 from datetime import date
 
 from .models import (
@@ -149,6 +150,34 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.current_date = date.today()
+        
+    
+    def validate(self, data):
+        current_date = date.today()
+
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        user = data.get('user')
+        frame = data.get('frame')
+        
+        if start_date and end_date:
+            if start_date > end_date:
+                raise ValidationError("End date must be greater than or equal to the start date.")
+
+            # if start_date < current_date:
+            #     raise ValidationError("Start date cannot be in the past.")
+
+            # if end_date < current_date:
+            #     raise ValidationError("End date cannot be in the past.")
+            
+        if user and frame:
+            existing_subscription = Subscription.objects.filter(user=user, frame=frame).first()
+
+            if existing_subscription:
+                if existing_subscription.end_date >= current_date:
+                    raise ValidationError(f"A subscription for this {user.email} and {frame.display_name} combination already exists and is not expired.")
+
+        return data
         
         
     def get_is_expired(self, obj):

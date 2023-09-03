@@ -8,7 +8,7 @@ from lib.models import BaseModel
 
 class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
-    sub_category = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    sub_category = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
     banner_image = models.ImageField(upload_to='category_banners/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)

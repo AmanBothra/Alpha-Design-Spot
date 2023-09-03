@@ -45,10 +45,10 @@ class BusinessCategorySerializer(serializers.ModelSerializer):
         ]
         
     
-    def validate_name(self, value):
-        if BusinessCategory.objects.filter(name__icontains=value).exists():
-            raise serializers.ValidationError("A BusinessCategory with this name already exists.")
-        return value
+    # def validate_name(self, value):
+    #     if BusinessCategory.objects.filter(name__icontains=value).exists():
+    #         raise serializers.ValidationError("A BusinessCategory with this name already exists.")
+    #     return value
 
 
 class SubCategorySerializer(serializers.ModelSerializer):

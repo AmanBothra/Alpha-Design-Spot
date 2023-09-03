@@ -144,21 +144,23 @@ class UserProfileListApiView(BaseModelViewSet):
     search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
 
     def get_queryset(self):
-        queryset = User.objects.all().order_by('-id')
         data = self.request.query_params.get('data', None)
-        
+        today_date = date.today()
+        queryset = User.objects.all().order_by('-id')
+
         if data == "recent":
-            queryset = queryset.filter(user_type="customer").order_by('-date_joined')[:15]
-        
-        if data == "admin":
-            queryset = User.objects.filter(user_type="admin")
-        
-        if data == "active":
-            queryset = User.objects.filter(user_type="customer", is_verify=True)
-            
-        if data == "inactive":
-            queryset = User.objects.filter(user_type="customer", is_verify=False)
-            
+            queryset = queryset.filter(
+                user_type="customer",
+                is_verify=False,
+                created__date=today_date
+            )
+        elif data == "admin":
+            queryset = queryset.filter(user_type="admin")
+        elif data == "active":
+            queryset = queryset.filter(user_type="customer", is_verify=True)
+        elif data == "inactive":
+            queryset = queryset.filter(user_type="customer", is_verify=False)
+
         return queryset
     
 
@@ -339,7 +341,10 @@ class DashboardApi(APIView):
             'total_post_count': total_post_count,
             'total_resaller_count': total_resaller_count,
             'total_category_count': total_category_count,
-            'total_sub_category_count': total_sub_category_count 
+            'total_sub_category_count': total_sub_category_count,
+            # 'total_active_customer_count':
+            # 'total_inactive_customer_count': 
+            # "expired_customer_subscription_count"
         }
         
         return Response(data)
