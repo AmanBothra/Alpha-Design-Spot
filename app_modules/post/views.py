@@ -15,7 +15,7 @@ from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPo
     CustomerOtherPostFrameMapping, BusinessPost, BusinessPostFrameMapping, BusinessCategory
 from lib.helpers import generate_video_with_frame
 from lib.viewsets import BaseModelViewSet
-from .filters import EventFilter, BusinessPostFilter
+from .filters import EventFilter, BusinessPostFilter, BusinessCategoryFilter
 
 
 class CategoeryViewset(BaseModelViewSet):
@@ -57,6 +57,7 @@ class BusinessCategoeryViewset(BaseModelViewSet):
     serializer_class = serializers.BusinessCategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ('name', 'profession_type')
+    filterset_class = BusinessCategoryFilter
     
 
 class BusinessCategoryList(viewsets.ReadOnlyModelViewSet):
