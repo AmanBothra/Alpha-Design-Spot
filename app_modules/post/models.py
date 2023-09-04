@@ -59,7 +59,7 @@ class Post(BaseModel):
 
 class OtherPost(BaseModel):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="other_post_categories")
-    name = models.CharField(max_length=100)
+    # name = models.CharField(max_length=100)
     file_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     file = models.FileField(upload_to=rename_file_name('other_post/'))
     group = models.ForeignKey(
@@ -70,7 +70,7 @@ class OtherPost(BaseModel):
     )
 
     def __str__(self) -> str:
-        return self.name
+        return self.category.name
 
     def save(self, *args, **kwargs):
         if self.file_type == "image":

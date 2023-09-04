@@ -111,7 +111,7 @@ class OtherPostSerializer(serializers.ModelSerializer):
     
     class Meta:
         model  = OtherPost
-        fields = ['id', 'category', 'category_name', 'name', 'file_type', 'file', 'group', 'group_name']
+        fields = ['id', 'category', 'category_name', 'file_type', 'file', 'group', 'group_name']
     
     
 class BusinessPostSerializer(serializers.ModelSerializer):
