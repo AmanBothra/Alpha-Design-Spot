@@ -19,6 +19,7 @@ from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Sub
 from app_modules.post.models import Post, Category, CustomerPostFrameMapping, BusinessCategory
 from lib.constants import UserConstants
 from lib.viewsets import BaseModelViewSet
+from app_modules.post.serializers import BusinessCategorySerializer
 
 
 class RegistrationView(APIView):
@@ -55,12 +56,6 @@ class LoginView(APIView):
             customer_frame = CustomerFrame.objects.filter(customer=user).first()
             is_a_group = customer_frame.is_a_group() if customer_frame else False
 
-            business_categories = BusinessCategory.objects.filter(
-                business_category_frames__customer=user
-            ).distinct()
-
-            category_names = [category.name for category in business_categories]
-            category_count = len(category_names)
             
             current_date = date.today()
             
@@ -85,9 +80,7 @@ class LoginView(APIView):
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
                     'is_expired': bool(is_expired),
-                    'days_left': days_left, 
-                    'category_count': category_count,
-                    'category_names': category_names
+                    'days_left': days_left
                 }
             )
         else:
@@ -250,13 +243,13 @@ class SetNewPassword(APIView):
         
     
 class CustomerGroupViewSet(viewsets.ModelViewSet):
-    queryset = CustomerGroup.objects.all()
+    queryset = CustomerGroup.objects.all().order_by('name')
     serializer_class = CustomerGroupSerializer
     
 
 class CustomerGroupListApiView(ListAPIView):
     pagination_class = None
-    queryset  = CustomerGroup.objects.all()
+    queryset  = CustomerGroup.objects.all().order_by('name')
     serializer_class = CustomerGroupSerializer
     
     
@@ -345,6 +338,45 @@ class DashboardApi(APIView):
             # 'total_active_customer_count':
             # 'total_inactive_customer_count': 
             # "expired_customer_subscription_count"
+            
+        }
+        
+        return Response(data)
+    
+    
+class MobileDashboardApi(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        current_date = date.today()
+        
+        expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
+        if expired_subscription:
+            is_expired = True
+            days_left = None
+        else:
+            is_expired = False
+            if user.subscription_users.exists():
+                subscription = user.subscription_users.latest('end_date')
+                days_left = (subscription.end_date - current_date).days
+            else:
+                days_left = None
+                
+        # Retrieve the categories assigned to the user's CustomerFrame objects
+        user_customer_frames = CustomerFrame.objects.filter(customer=user)
+        assigned_business_categories = []
+        for frame in user_customer_frames:
+            if frame.business_category:
+                assigned_business_categories.append(frame.business_category)
+
+        # Serialize the assigned business categories
+        category_serializer = BusinessCategorySerializer(assigned_business_categories, many=True)
+        
+        data = {
+            'id': user.id,
+            'is_verify': user.is_verify,
+            'is_expired': is_expired,
+            'days_left': days_left, 
+            'assigned_business_categories': category_serializer.data,
         }
         
         return Response(data)

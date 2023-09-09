@@ -57,7 +57,7 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         model = CustomerFrame
         fields = (
             'id', 'customer', 'frame_img', 'group', 'group_name', 'display_name', 'mobile_number', 'business_category',
-            'profession_type', 'business_category_name'
+            'profession_type', 'business_category_name', 'updated_on'
         )
         
     def create(self, validated_data):
@@ -107,9 +107,13 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
     
         
 class CustomerGroupSerializer(serializers.ModelSerializer):
+    frame_count = serializers.SerializerMethodField()
     class Meta:
         model = CustomerGroup
-        fields = ('id', 'name')
+        fields = ('id', 'name', 'frame_count')
+
+    def get_frame_count(self, obj):
+        return obj.customer_frame_group.count()
         
         
 class CuatomerListSerializer(serializers.ModelSerializer):

@@ -19,6 +19,7 @@ urlpatterns = [
     path('customer-frame-list', views.CustomerFrameListApiView.as_view(), name='customer-frame-list'),
     path('customer-list', views.CustomerListApiView.as_view(), name='customer-list'),
     path('dashboard', views.DashboardApi.as_view(), name='dashboard-api'),
+    path('mobile-dashboard', views.MobileDashboardApi.as_view(), name='mobile-dashboard-api'),
     path('check-email', views.CheckEmailExistence.as_view(), name='check-email'),
     path('send-otp', views.SendOTP.as_view(), name='send-otp'),
     path('verify-otp', views.VerifyOTP.as_view(), name='verify-otp'),
