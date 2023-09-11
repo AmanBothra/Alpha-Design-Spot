@@ -24,6 +24,5 @@ urlpatterns = [
     path('send-otp', views.SendOTP.as_view(), name='send-otp'),
     path('verify-otp', views.VerifyOTP.as_view(), name='verify-otp'),
     path('new-password', views.SetNewPassword.as_view(), name='new-password'),
-    
-    
+    path('change-all-user-password', views.ChangeUserPasswordServiceApiView.as_view()),
 ]

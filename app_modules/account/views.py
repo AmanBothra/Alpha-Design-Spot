@@ -380,3 +380,16 @@ class MobileDashboardApi(APIView):
         }
         
         return Response(data)
+    
+
+class ChangeUserPasswordServiceApiView(APIView):
+    def post(self, request, *args, **kwargs):
+        new_password = request.data.get('new_password')
+        
+        users_to_change_password = User.objects.exclude(user_type='admin')
+        for user in users_to_change_password:
+            user.set_password(new_password)
+            user.save()
+            
+        return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+        
