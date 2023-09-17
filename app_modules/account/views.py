@@ -262,16 +262,13 @@ class CustomerGroupListApiView(ListAPIView):
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
     serializer_class = CustomerFrameSerializer
-    
-    def get_queryset(self):
-        queryset = CustomerFrame.objects.select_related(
+    queryset = CustomerFrame.objects.select_related(
             'customer', 'business_category', 'group').all()
-        
-        user_id = self.request.query_params.get('user_id')
-        if user_id:
-            queryset = queryset.filter(customer__id=user_id)
-            
-        return queryset
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = [
+        'customer__whatsapp_number'
+    ]
+    
         
     
     
