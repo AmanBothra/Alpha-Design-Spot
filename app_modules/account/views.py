@@ -269,7 +269,7 @@ class CustomerFrameListApiView(ListAPIView):
         
         user_id = self.request.query_params.get('user_id')
         if user_id:
-            queryset = queryset.filter(customer__iexact=user_id)
+            queryset = queryset.filter(customer__id=user_id)
             
         return queryset
         
