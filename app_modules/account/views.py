@@ -99,33 +99,39 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     filterset_fields = ['group__name', 'profession_type']
     
     def perform_update(self, serializer):
+        current_date = date.today()
         instance = serializer.instance
         old_group_id = instance.group.id if instance.group else None
         serializer.save()
 
         if old_group_id:
             new_group = instance.group.id
-            new_post_group_wise = Post.objects.filter(group_id=new_group)
+            new_post_group_wise = Post.objects.filter(group_id=new_group,
+                                                      event__event_date__gte=current_date).values('id')
             old_post_mapping = CustomerPostFrameMapping.objects.filter(
-                customer=instance.customer, customer_frame__group_id=old_group_id
+                customer=instance.customer,
+                customer_frame__group_id=old_group_id,
+                post__event__event_date__gte=current_date
             )
-            
+
             # Collect updated data
             updated_data = []
+
             for post_mapping in old_post_mapping:
-                updated_data.append(
-                    CustomerPostFrameMapping(
-                        id=post_mapping.id,
-                        customer_frame_id=post_mapping.customer_frame_id,
-                        post_id=new_post_group_wise.get(event=post_mapping.post.event).id
+                new_post = next((item for item in new_post_group_wise if item['id'] == post_mapping.post.id), None)
+                if new_post:
+                    updated_data.append(
+                        CustomerPostFrameMapping(
+                            id=post_mapping.id,
+                            customer_frame_id=post_mapping.customer_frame_id,
+                            post_id=new_post['id']
+                        )
                     )
-                )
-                
+
             # Perform bulk update
             CustomerPostFrameMapping.objects.bulk_update(
                 updated_data,
                 ['customer_frame_id', 'post_id'],
-                batch_size=100  # Adjust batch size as needed
             )
 
             return Response({'message': 'Customer frame updated successfully'})

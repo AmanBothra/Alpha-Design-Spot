@@ -80,15 +80,20 @@ class EventViewset(BaseModelViewSet):
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
-        queryset = Event.objects.all().order_by('-event_date')
+        five_days_from_today = today + timedelta(days=5)
+
+        queryset = Event.objects.all().order_by('event_date')
 
         if date_type == "today":
             queryset = queryset.filter(event_date=today)
         elif date_type == "tomorrow":
             queryset = queryset.filter(event_date=tomorrow)
         elif date_type == "upcoming":
-            queryset = queryset.filter(event_date__gt=tomorrow).order_by("event_date")
-            
+            queryset = queryset.filter(
+                event_date__gte=tomorrow,
+                event_date__lte=five_days_from_today
+            ).order_by("event_date")
+
         return queryset
 
 
