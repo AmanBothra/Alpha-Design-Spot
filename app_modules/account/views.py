@@ -290,7 +290,7 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentMethodSerializer
     
     
-class SubscriptionViewSet(viewsets.ModelViewSet):
+class SubscriptionViewSet(BaseModelViewSet):
     serializer_class = SubscriptionSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
@@ -322,6 +322,8 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=user)
 
         return queryset
+    
+    
 
 class DashboardApi(APIView):
     

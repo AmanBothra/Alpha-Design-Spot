@@ -179,7 +179,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
             if existing_subscription:
                 if existing_subscription.end_date >= current_date:
-                    raise ValidationError(f"A subscription for this {user.email} and {frame.display_name} combination already exists and is not expired.")
+                    raise ValidationError({"subscription": f"A subscription for this {user.email} and {frame.display_name} combination already exists and is not expired."})
 
         return data
         
