@@ -5,6 +5,8 @@ from datetime import date
 from .models import (
     User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription
 )
+from app_modules.post.models import Post, CustomerPostFrameMapping
+
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
@@ -95,6 +97,48 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
                 )
         
         return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        current_date = date.today()
+        old_group_id = instance.group.id if instance.group else None
+
+        # Update the instance with validated data
+        instance = super().update(instance, validated_data)
+
+        if old_group_id:
+            new_group = instance.group.id
+            new_post_group_wise = Post.objects.filter(group_id=new_group,
+                                                      event__event_date__gte=current_date).values('id')
+
+            updated_data = []
+
+            old_post_mapping_filters = {
+                'customer_frame_id__exact': instance.id,
+                'customer_frame__group_id__exact': old_group_id,
+                'post__event__event_date__gte': current_date
+            }
+
+            old_post_mapping_to_delete = CustomerPostFrameMapping.objects.filter(**old_post_mapping_filters)
+
+            # Delete old mappings
+            old_post_mapping_to_delete.delete()
+
+            # Create new mappings
+            for post_mapping in old_post_mapping_to_delete:
+                new_post = next((item for item in new_post_group_wise if item['id'] == post_mapping.post.id), None)
+                if new_post:
+                    updated_data.append(
+                        CustomerPostFrameMapping(
+                            id=post_mapping.id,
+                            customer_frame_id=post_mapping.customer_frame_id,
+                            post_id=new_post['id']
+                        )
+                    )
+
+            # Perform bulk create for updated mappings
+            CustomerPostFrameMapping.objects.bulk_create(updated_data)
+
+        return instance
         
     def get_group_name(self, obj):
         return getattr(obj.group, 'name', None)

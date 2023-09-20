@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from datetime import date, timedelta
 from django.utils import timezone
+from django.db.models import Q
 
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
@@ -98,43 +99,46 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     ]
     filterset_fields = ['group__name', 'profession_type']
     
-    def perform_update(self, serializer):
-        current_date = date.today()
-        instance = serializer.instance
-        old_group_id = instance.group.id if instance.group else None
-        serializer.save()
+    # def perform_update(self, serializer):
+    #     current_date = date.today()
+    #     instance = serializer.instance
+    #     old_group_id = instance.group.id if instance.group else None
+    #     serializer.save()
 
-        if old_group_id:
-            new_group = instance.group.id
-            new_post_group_wise = Post.objects.filter(group_id=new_group,
-                                                      event__event_date__gte=current_date).values('id')
-            old_post_mapping = CustomerPostFrameMapping.objects.filter(
-                customer=instance.customer,
-                customer_frame__group_id=old_group_id,
-                post__event__event_date__gte=current_date
-            )
+    #     if old_group_id:
+    #         new_group = instance.group.id
+    #         new_post_group_wise = Post.objects.filter(group_id=new_group,
+    #                                                   event__event_date__gte=current_date).values('id')
 
-            # Collect updated data
-            updated_data = []
+    #         # Collect updated data
+    #         updated_data = []
 
-            for post_mapping in old_post_mapping:
-                new_post = next((item for item in new_post_group_wise if item['id'] == post_mapping.post.id), None)
-                if new_post:
-                    updated_data.append(
-                        CustomerPostFrameMapping(
-                            id=post_mapping.id,
-                            customer_frame_id=post_mapping.customer_frame_id,
-                            post_id=new_post['id']
-                        )
-                    )
+    #         # Create a list of Q objects to filter old mappings for deletion
+    #         old_mapping_filters = Q(customer_frame_id__exact=instance.id) & \
+    #                               Q(customer_frame__group_id__exact=old_group_id) & \
+    #                               Q(post__event__event_date__gte=current_date)
 
-            # Perform bulk update
-            CustomerPostFrameMapping.objects.bulk_update(
-                updated_data,
-                ['customer_frame_id', 'post_id'],
-            )
+    #         old_post_mapping_to_delete = CustomerPostFrameMapping.objects.filter(old_mapping_filters)
 
-            return Response({'message': 'Customer frame updated successfully'})
+    #         # Delete old mappings
+    #         old_post_mapping_to_delete.delete()
+
+    #         # Create new mappings
+    #         for post_mapping in old_post_mapping_to_delete:
+    #             new_post = next((item for item in new_post_group_wise if item['id'] == post_mapping.post.id), None)
+    #             if new_post:
+    #                 updated_data.append(
+    #                     CustomerPostFrameMapping(
+    #                         id=post_mapping.id,
+    #                         customer_frame_id=post_mapping.customer_frame_id,
+    #                         post_id=new_post['id']
+    #                     )
+    #                 )
+
+    #         # Perform bulk create for updated mappings
+    #         CustomerPostFrameMapping.objects.bulk_create(updated_data)
+
+    #         return Response({'message': 'Customer frame updated successfully'})
 
 
 class UserProfileListApiView(BaseModelViewSet):
