@@ -112,13 +112,10 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
 
             updated_data = []
 
-            old_post_mapping_filters = {
-                'customer_frame_id__exact': instance.id,
-                'customer_frame__group_id__exact': old_group_id,
-                'post__event__event_date__gte': current_date
-            }
-
-            old_post_mapping_to_delete = CustomerPostFrameMapping.objects.filter(**old_post_mapping_filters)
+            old_post_mapping_to_delete = CustomerPostFrameMapping.objects.filter(
+                customer_frame_id=instance.id, customer_frame__group_id=old_group_id
+            )
+            print(old_post_mapping_to_delete, "-------------------------")
 
             # Delete old mappings
             old_post_mapping_to_delete.delete()
