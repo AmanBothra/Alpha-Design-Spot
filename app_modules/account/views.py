@@ -93,8 +93,7 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
-        'group__name', 'customer__whatsapp_number', 'business_category__name', 'profession_type',
-        'display_name'
+        'group__name', 'customer__whatsapp_number', 'display_name'
     ]
     filterset_fields = ['group__name', 'profession_type']
 

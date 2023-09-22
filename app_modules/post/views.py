@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from rest_framework.views import APIView
+
 from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from app_modules.post import serializers
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, \
@@ -33,7 +34,7 @@ class CategoeryViewset(BaseModelViewSet):
 
         if exclude_main_categories == "false":
             queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
-            
+
         if file_type:
             queryset = Category.objects.filter(other_post_categories__file_type=file_type).distinct()
         return queryset
@@ -43,9 +44,9 @@ class CategoeryViewset(BaseModelViewSet):
         category = self.get_object()
         subcategories = Category.objects.filter(sub_category=category)
         serializer = self.get_serializer(subcategories, many=True)
-        return Response(serializer.data)      
-    
-    
+        return Response(serializer.data)
+
+
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.filter(sub_category__isnull=False).order_by('-id')
     serializer_class = serializers.SubcategorySerializer
@@ -58,7 +59,7 @@ class BusinessCategoeryViewset(BaseModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ('name', 'profession_type')
     filterset_class = BusinessCategoryFilter
-    
+
 
 class BusinessCategoryList(viewsets.ReadOnlyModelViewSet):
     queryset = BusinessCategory.objects.all().order_by('-id')
@@ -101,7 +102,7 @@ class PostViewset(BaseModelViewSet):
     queryset = Post.objects.select_related('event', 'group').all().order_by('-id')
     serializer_class = serializers.PostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['group__name', 'event__name', 'file_type', 'event__date']
+    search_fields = ['group__name', 'event__name', 'file_type', 'event__event_date']
 
     def get_serializer_context(self):
         context = super(PostViewset, self).get_serializer_context()
@@ -116,7 +117,7 @@ class PostViewset(BaseModelViewSet):
             if existing_post:
                 raise ValidationError({"event": "A post with the same event and group already exists."})
 
-        response =  super().create(request, *args, **kwargs)
+        response = super().create(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:
             group_name = None
@@ -139,16 +140,16 @@ class OtherPostViewset(BaseModelViewSet):
     serializer_class = serializers.OtherPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['group__name', 'category__name', 'file_type']
-    
-    
+
+
 class BusinessPostViewset(BaseModelViewSet):
     serializer_class = serializers.BusinessPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = [
-        'group__name','file_type', 'business_category__name', 'profession_type'
+        'group__name', 'file_type', 'business_category__name', 'profession_type'
     ]
     filterset_class = BusinessPostFilter
-    
+
     def get_queryset(self):
         file_type = self.request.query_params.get('file_type')
         queryset = BusinessPost.objects.select_related('business_category', 'group').all()
@@ -161,7 +162,6 @@ class BusinessPostViewset(BaseModelViewSet):
     def get_serializer_context(self):
         context = super(BusinessPostViewset, self).get_serializer_context()
         return context
-
 
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):
@@ -210,8 +210,8 @@ class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
             queryset = queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
 
         return queryset
-    
-    
+
+
 class BusinessPostFrameMappingViewSet(BaseModelViewSet):
     queryset = BusinessPostFrameMapping.objects
     serializer_class = serializers.BusinessPostFrameMappingSerializer
@@ -238,21 +238,21 @@ class BusinessPostFrameMappingViewSet(BaseModelViewSet):
 class EventListApiView(ListAPIView):
     pagination_class = None
     serializer_class = serializers.EventSerializer
-    
+
     def get_queryset(self):
         event_type = self.request.query_params.get('event_type', None)
-        
+
         today = date.today()
         queryset = Event.objects.filter(event_date__gte=today).order_by('-id')
-        
+
         if event_type == 'image':
             queryset = queryset.filter(event_type='image')
-            
+
         if event_type == 'video':
             queryset = queryset.filter(event_type='video')
-            
+
         return queryset
-    
+
 
 class CategoryListApiView(ListAPIView):
     pagination_class = None
@@ -322,9 +322,9 @@ class DeletePastEventsView(APIView):
             post_to_delete = Post.objects.filter(event=event)
             for post in post_to_delete:
                 mapping_post_to_delete = CustomerPostFrameMapping.objects.filter(post=post)
-            
+
         post_to_delete.delete()
-        mapping_post_to_delete.delete()   
+        mapping_post_to_delete.delete()
         events_to_delete.delete()
         return Response(
             {'message': 'Successfully deleted past events.'},
