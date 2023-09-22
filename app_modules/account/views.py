@@ -1,26 +1,26 @@
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import permissions, viewsets, exceptions, status
-from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import date, timedelta
+
+from django.conf import settings
 from django.contrib.auth import authenticate
+from django.core.mail import send_mail
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, viewsets, exceptions, status
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
-from django.core.mail import send_mail
-from django.conf import settings
-from datetime import date, timedelta
-from django.utils import timezone
-from django.db.models import Q
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
+from app_modules.post.models import Post, Category
+from app_modules.post.serializers import BusinessCategorySerializer
+from lib.constants import UserConstants
+from lib.viewsets import BaseModelViewSet
+from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
     UserProfileListSerializer, CustomerGroupSerializer, CuatomerListSerializer, PlanSerializer, PaymentMethodSerializer,
 )
-from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
-from app_modules.post.models import Post, Category, CustomerPostFrameMapping, BusinessCategory
-from lib.constants import UserConstants
-from lib.viewsets import BaseModelViewSet
-from app_modules.post.serializers import BusinessCategorySerializer
 
 
 class RegistrationView(APIView):
@@ -50,16 +50,15 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         user = authenticate(request, username=email, password=password)
-        
+
         if user is not None:
             refresh = RefreshToken.for_user(user)
-            
+
             customer_frame = CustomerFrame.objects.filter(customer=user).first()
             is_a_group = customer_frame.is_a_group() if customer_frame else False
 
-            
             current_date = date.today()
-            
+
             expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
             if expired_subscription:
                 is_expired = True
@@ -90,7 +89,7 @@ class LoginView(APIView):
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.select_related(
-                    'customer', 'business_category', 'group').all().order_by('-id')
+        'customer', 'business_category', 'group').all().order_by('-id')
     serializer_class = CustomerFrameSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
@@ -98,47 +97,6 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
         'display_name'
     ]
     filterset_fields = ['group__name', 'profession_type']
-    
-    # def perform_update(self, serializer):
-    #     current_date = date.today()
-    #     instance = serializer.instance
-    #     old_group_id = instance.group.id if instance.group else None
-    #     serializer.save()
-
-    #     if old_group_id:
-    #         new_group = instance.group.id
-    #         new_post_group_wise = Post.objects.filter(group_id=new_group,
-    #                                                   event__event_date__gte=current_date).values('id')
-
-    #         # Collect updated data
-    #         updated_data = []
-
-    #         # Create a list of Q objects to filter old mappings for deletion
-    #         old_mapping_filters = Q(customer_frame_id__exact=instance.id) & \
-    #                               Q(customer_frame__group_id__exact=old_group_id) & \
-    #                               Q(post__event__event_date__gte=current_date)
-
-    #         old_post_mapping_to_delete = CustomerPostFrameMapping.objects.filter(old_mapping_filters)
-
-    #         # Delete old mappings
-    #         old_post_mapping_to_delete.delete()
-
-    #         # Create new mappings
-    #         for post_mapping in old_post_mapping_to_delete:
-    #             new_post = next((item for item in new_post_group_wise if item['id'] == post_mapping.post.id), None)
-    #             if new_post:
-    #                 updated_data.append(
-    #                     CustomerPostFrameMapping(
-    #                         id=post_mapping.id,
-    #                         customer_frame_id=post_mapping.customer_frame_id,
-    #                         post_id=new_post['id']
-    #                     )
-    #                 )
-
-    #         # Perform bulk create for updated mappings
-    #         CustomerPostFrameMapping.objects.bulk_create(updated_data)
-
-    #         return Response({'message': 'Customer frame updated successfully'})
 
 
 class UserProfileListApiView(BaseModelViewSet):
@@ -165,23 +123,23 @@ class UserProfileListApiView(BaseModelViewSet):
             queryset = queryset.filter(user_type="customer", is_verify=False)
 
         return queryset
-    
+
 
 class CheckEmailExistence(APIView):
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request):
         email = request.data.get('email')
         try:
             user = User.objects.get(email=email)
             return Response({"message": "Email exists"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
-            raise exceptions.ValidationError ({"Email": "Email does not exist"})
-        
+            raise exceptions.ValidationError({"Email": "Email does not exist"})
+
 
 class SendOTP(APIView):
     permission_classes = [permissions.AllowAny]
-    
+
     def get(self, request, *args, **kwargs):
         email = request.query_params.get("email")
 
@@ -204,11 +162,11 @@ class SendOTP(APIView):
 
         response_data = {"message": "Email OTP sent successfully."}
         return Response(data=response_data, status=status.HTTP_200_OK)
-    
-    
+
+
 class VerifyOTP(APIView):
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request, *args, **kwargs):
         data = request.data
         email = data.get("email")
@@ -228,13 +186,13 @@ class VerifyOTP(APIView):
         user.is_email_verify = True
         user.save()
         user_code.delete()
-        
-        return Response({"message": "Email verification is successfully completed",},status=status.HTTP_200_OK)
+
+        return Response({"message": "Email verification is successfully completed", }, status=status.HTTP_200_OK)
 
 
 class SetNewPassword(APIView):
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request):
         email = request.data.get('email')
         new_password = request.data.get('new_password')
@@ -250,50 +208,48 @@ class SetNewPassword(APIView):
             return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             raise exceptions.ValidationError({"email": "User not found"})
-        
-    
+
+
 class CustomerGroupViewSet(viewsets.ModelViewSet):
     queryset = CustomerGroup.objects.all().order_by('name')
     serializer_class = CustomerGroupSerializer
-    
+
 
 class CustomerGroupListApiView(ListAPIView):
     pagination_class = None
-    queryset  = CustomerGroup.objects.all().order_by('name')
+    queryset = CustomerGroup.objects.all().order_by('name')
     serializer_class = CustomerGroupSerializer
-    
-    
+
+
 class CustomerFrameListApiView(ListAPIView):
     pagination_class = None
     serializer_class = CustomerFrameSerializer
     queryset = CustomerFrame.objects.select_related(
-            'customer', 'business_category', 'group').all()
+        'customer', 'business_category', 'group').all()
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
         'customer__whatsapp_number'
     ]
-    
-        
-    
-    
+
+
 class CustomerListApiView(ListAPIView):
     pagination_class = None
-    queryset  = User.objects.all().order_by('-id')
+    queryset = User.objects.all().order_by('-id')
     serializer_class = CuatomerListSerializer
-    
-    
+
+
 class PlanViewSet(viewsets.ModelViewSet):
     pagination_class = None
-    queryset  = Plan.objects.all().order_by('-id')
+    queryset = Plan.objects.all().order_by('-id')
     serializer_class = PlanSerializer
-    
-    
+
+
 class PaymentMethodViewSet(viewsets.ModelViewSet):
     pagination_class = None
-    queryset  = PaymentMethod.objects.all().order_by('-id')
+    queryset = PaymentMethod.objects.all().order_by('-id')
     serializer_class = PaymentMethodSerializer
-    
-    
+
+
 class SubscriptionViewSet(BaseModelViewSet):
     serializer_class = SubscriptionSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -326,18 +282,17 @@ class SubscriptionViewSet(BaseModelViewSet):
             queryset = queryset.filter(user=user)
 
         return queryset
-    
-    
+
 
 class DashboardApi(APIView):
-    
+
     def get(self, request, *args, **kwargs):
         total_customer_count = User.objects.filter(user_type="customer", no_of_post__lte=1).count()
         total_post_count = Post.objects.select_related('event', 'group').count()
         total_resaller_count = User.objects.filter(no_of_post__gt=1, user_type="customer").count()
         total_category_count = Category.objects.filter(sub_category__isnull=True).count()
         total_sub_category_count = Category.objects.filter(sub_category__isnull=False).count()
-        
+
         data = {
             'total_customer_count': total_customer_count,
             'total_post_count': total_post_count,
@@ -347,17 +302,17 @@ class DashboardApi(APIView):
             # 'total_active_customer_count':
             # 'total_inactive_customer_count': 
             # "expired_customer_subscription_count"
-            
+
         }
-        
+
         return Response(data)
-    
-    
+
+
 class MobileDashboardApi(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         current_date = date.today()
-        
+
         expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
         if expired_subscription:
             is_expired = True
@@ -369,7 +324,7 @@ class MobileDashboardApi(APIView):
                 days_left = (subscription.end_date - current_date).days
             else:
                 days_left = None
-                
+
         # Retrieve the categories assigned to the user's CustomerFrame objects
         user_customer_frames = CustomerFrame.objects.filter(customer=user)
         assigned_business_categories = []
@@ -379,26 +334,25 @@ class MobileDashboardApi(APIView):
 
         # Serialize the assigned business categories
         category_serializer = BusinessCategorySerializer(assigned_business_categories, many=True)
-        
+
         data = {
             'id': user.id,
             'is_verify': user.is_verify,
             'is_expired': is_expired,
-            'days_left': days_left, 
+            'days_left': days_left,
             'assigned_business_categories': category_serializer.data,
         }
-        
+
         return Response(data)
-    
+
 
 class ChangeUserPasswordServiceApiView(APIView):
     def post(self, request, *args, **kwargs):
         new_password = request.data.get('new_password')
-        
+
         users_to_change_password = User.objects.exclude(user_type='admin')
         for user in users_to_change_password:
             user.set_password(new_password)
             user.save()
-            
+
         return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
-        
