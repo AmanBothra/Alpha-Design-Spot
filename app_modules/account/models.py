@@ -1,14 +1,14 @@
+import random
+
 from django.contrib.auth.models import AbstractUser
+from django.db import IntegrityError
 from django.db import models
 from django.utils import timezone
-import random
-from django.db import IntegrityError
 
-from lib.constants import USER_TYPE, UserConstants, APP_TPE, PROFESSION_TYPE
+from lib.constants import USER_TYPE, UserConstants, PROFESSION_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
-from .managers import UserManager
 from lib.models import BaseModel
-
+from .managers import UserManager
 
 
 class User(AbstractUser, BaseModel):
@@ -25,12 +25,12 @@ class User(AbstractUser, BaseModel):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
-    
+
     objects = UserManager()
 
     def __str__(self):
         return f"{self.first_name}"
-    
+
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email
@@ -38,7 +38,7 @@ class User(AbstractUser, BaseModel):
         if len(password) < 40:
             self.set_password(password)
         super(User, self).save(*args, **kwargs)
-        
+
     def get_or_create_user_code(self, code_type=UserConstants.FORGOTTEN_PASSWORD):
         try:
             user_code, created = UserCode.objects.get_or_create(
@@ -52,8 +52,8 @@ class User(AbstractUser, BaseModel):
             return user_code, created
         except IntegrityError:  # Handle the case when unique constraint is violated
             return self.get_or_create_user_code(code_type)
-        
-        
+
+
 class UserCode(models.Model):
     code = models.IntegerField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -69,14 +69,14 @@ class UserCode(models.Model):
 
     def __str__(self):
         return f"Code for {self.user} is {self.code}"
-        
-        
+
+
 class CustomerGroup(BaseModel):
     name = models.CharField(max_length=50)
-    
+
     def __str__(self) -> str:
         return f"{self.name}"
-    
+
 
 class CustomerFrame(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer_frame")
@@ -95,72 +95,72 @@ class CustomerFrame(BaseModel):
         CustomerGroup,
         on_delete=models.CASCADE,
         related_name="customer_frame_group",
-        null=True, blank=True    
+        null=True, blank=True
     )
     display_name = models.CharField(max_length=20, null=True, blank=True)
-    
-    
+
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number}"
-    
+
     def save(self, *args, **kwargs):
         if self.frame_img:
             converter_to_webp(self.frame_img)
         super().save(*args, **kwargs)
-        
+
     def is_a_group(self):
         # Check if the group name starts with 'A'
         return self.group.name.startswith('A') if self.group else False
 
-      
+
 class PaymentMethod(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    
+
     def __str__(self) -> str:
         return self.name
-    
+
 
 class Plan(BaseModel):
     name = models.CharField(max_length=100)
     duration_in_months = models.IntegerField(default=0)
     price = models.IntegerField(default=0)
-    
+
     def __str__(self):
         return self.name
-    
-    
+
+
 def order_number():
     last_subscription = Subscription.objects.all().order_by('id').last()
     if not last_subscription:
         return 'ADS1001'
-    
+
     order_no = last_subscription.order_number
     try:
         order_int = int(order_no[3:])
     except ValueError:
         return 'ADS1001'
-    
+
     new_order_int = order_int + 1
     new_order_no = f'ADS{new_order_int:04}'
     return new_order_no
-    
-    
+
+
 class Subscription(BaseModel):
     order_number = models.CharField(max_length=10, default=order_number, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscription_users")
     frame = models.ForeignKey(CustomerFrame, on_delete=models.SET_NULL,
                               related_name="subscription_frames", null=True)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="subscription_plans")
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='subscription_payment_methods')
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE,
+                                       related_name='subscription_payment_methods')
     start_date = models.DateField()
     end_date = models.DateField()
     transaction_number = models.CharField(max_length=50, null=True, blank=True)
     file = models.FileField(upload_to=rename_file_name('subscription/'), null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    
+
     def __str__(self) -> str:
         return f"{self.order_number} {self.plan.name}"
-    
+
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = order_number()

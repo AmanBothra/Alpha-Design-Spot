@@ -16,6 +16,7 @@ from app_modules.post.models import Post, Category
 from app_modules.post.serializers import BusinessCategorySerializer
 from lib.constants import UserConstants
 from lib.viewsets import BaseModelViewSet
+from .filters import CustomerFrameFilter
 from .models import CustomerFrame, User, CustomerGroup, PaymentMethod, Plan, Subscription, UserCode
 from .serializers import (
     CustomerRegistrationSerializer, AdminRegistrationSerializer, CustomerFrameSerializer, SubscriptionSerializer,
@@ -91,11 +92,12 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.select_related(
         'customer', 'business_category', 'group').all().order_by('-id')
     serializer_class = CustomerFrameSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = [
         'group__name', 'customer__whatsapp_number', 'display_name'
     ]
     filterset_fields = ['group__name', 'profession_type']
+    filterset_class = CustomerFrameFilter
 
 
 class UserProfileListApiView(BaseModelViewSet):
