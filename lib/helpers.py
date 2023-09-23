@@ -69,7 +69,7 @@ def converter_to_webp(image_instance):
         if ext in image_file_format:
             image = Image.open(image_instance)
             image_io = BytesIO()
-            image.save(image_io, format="WEBP", quality=80)
+            image.save(image_io, format="WEBP", quality=100)
             image_instance.save(image_instance.name.split(".")[0] + ".webp", ContentFile(image_io.getvalue()),
                                 save=False)
 
