@@ -100,7 +100,7 @@ class CustomerFrame(BaseModel):
     display_name = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self) -> str:
-        return f"{self.customer.whatsapp_number}"
+        return f"{self.customer.whatsapp_number} and {self.group}"
 
     def save(self, *args, **kwargs):
         if self.frame_img:

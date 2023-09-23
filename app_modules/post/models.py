@@ -49,7 +49,7 @@ class Post(BaseModel):
     )
 
     def __str__(self) -> str:
-        return self.event.name
+        return f"{self.event.name} and group is {self.group.name}"
     
     def save(self, *args, **kwargs):
         if self.file_type == 'image':

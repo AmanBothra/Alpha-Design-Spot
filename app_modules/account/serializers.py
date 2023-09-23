@@ -7,6 +7,7 @@ from app_modules.post.models import Post, CustomerPostFrameMapping, CustomerOthe
 from .models import (
     User, CustomerFrame, CustomerGroup, PaymentMethod, Plan, Subscription
 )
+from django.db.models import F
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
@@ -106,28 +107,43 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
         # Update the instance with validated data
         instance = super().update(instance, validated_data)
 
-        if old_group_id:
-            new_group = instance.group.id
-
-            # Get post and other post IDs for the new group
-            new_post_ids = Post.objects.filter(group_id=new_group, event__event_date__gte=current_date).values_list(
-                'id', flat=True)
-            new_other_post_ids = OtherPost.objects.filter(group_id=new_group).values_list('id', flat=True)
-
-            # Update existing mappings for posts in the new group
-            CustomerPostFrameMapping.objects.filter(
+        if old_group_id and 'group' in validated_data:
+            new_group_id = validated_data['group'].id if validated_data['group'] else None
+            
+            new_post_ids = Post.objects.filter(
+                group_id=new_group_id,
+                event__event_date__gte=current_date
+            ).values_list('id', flat=True)
+            
+            new_other_post_ids = OtherPost.objects.filter(group_id=new_group_id).values_list('id', flat=True)
+            
+            old_post_ids = Post.objects.filter(
+                group_id=old_group_id,
+                event__event_date__gte=current_date
+            ).values_list('id', flat=True)
+            
+            old_other_post_ids = OtherPost.objects.filter(group_id=old_group_id).values_list('id', flat=True)
+            
+            old_post_mapping = CustomerPostFrameMapping.objects.filter(
                 customer_frame_id=instance.id,
-                customer_frame__group_id=old_group_id,
-                post_id__in=new_post_ids
-            ).update(customer_frame__group_id=new_group)
-
-            # Update existing mappings for other posts in the new group
-            CustomerOtherPostFrameMapping.objects.filter(
+                post_id__in=old_post_ids
+            )
+            
+            old_other_post_mapping = CustomerOtherPostFrameMapping.objects.filter(
                 customer_frame_id=instance.id,
-                customer_frame__group_id=old_group_id,
-                other_post_id__in=new_other_post_ids
-            ).update(customer_frame__group_id=new_group)
-
+                other_post_id__in=old_other_post_ids
+            )
+            
+            for mapping in old_post_mapping:
+                for new_post in new_post_ids:
+                    mapping.post_id = new_post
+                    mapping.save()
+                    
+            for mapping in old_other_post_mapping:
+                for other_post in old_post_ids:
+                    mapping.other_post_id = other_post
+                    mapping.save()
+            
         return instance
 
     def get_group_name(self, obj):

@@ -11,7 +11,7 @@ class PostAdmin(admin.ModelAdmin):
     
 
 class CustomerPostFrameMappingAdmin(admin.ModelAdmin):
-    list_display = ['customer', 'post']
+    list_display = ['customer', 'post', 'customer_frame']
 
 admin.site.register(Category)
 admin.site.register(Event, EventAdmin)

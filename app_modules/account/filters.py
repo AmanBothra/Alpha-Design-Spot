@@ -6,11 +6,10 @@ from lib import filters
 
 class CustomerFrameFilter(filters.BaseFilter):
     mobile_number = django_filters.CharFilter(lookup_expr='contains', field_name="customer__whatsapp_number")
-    display_name = django_filters.CharFilter(lookup_expr='contains')
 
     class Meta:
         model = models.CustomerFrame
-        fields = ('group', 'profession_type')
+        fields = ('group', 'profession_type', 'display_name')
 
     ordering = filters.BaseOrderingFilter(
         fields=(
