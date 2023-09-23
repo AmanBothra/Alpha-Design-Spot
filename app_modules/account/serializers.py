@@ -134,15 +134,14 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
                 other_post_id__in=old_other_post_ids
             )
             
-            for mapping in old_post_mapping:
-                for new_post in new_post_ids:
-                    mapping.post_id = new_post
-                    mapping.save()
+            for mapping, new_post_id in zip(old_post_mapping, new_post_ids):
+                mapping.post_id = new_post_id
+                mapping.save()
+                
+            for mapping, new_other_post_id in zip(old_other_post_mapping, new_other_post_ids):
+                mapping.other_post_id = new_other_post_id
+                mapping.save()
                     
-            for mapping in old_other_post_mapping:
-                for other_post in old_post_ids:
-                    mapping.other_post_id = other_post
-                    mapping.save()
             
         return instance
 
