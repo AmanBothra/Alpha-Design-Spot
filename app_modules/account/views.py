@@ -78,6 +78,7 @@ class LoginView(APIView):
                     'access': str(refresh.access_token),
                     'id': user.id,
                     'is_verify': user.is_verify,
+                    'mobile_number' : user.whatsapp_number,
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
                     'is_expired': bool(is_expired),
