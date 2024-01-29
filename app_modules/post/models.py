@@ -1,5 +1,6 @@
 from account.models import User, CustomerFrame, CustomerGroup
 from django.db import models
+from django.db.models import CharField
 
 from lib.constants import FILE_TYPE, PROFESSION_TYPE
 from lib.helpers import rename_file_name, converter_to_webp
@@ -13,7 +14,7 @@ class Category(BaseModel):
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
 
-    def __str__(self) -> str:
+    def __str__(self) -> CharField:
         return self.name
 
     def save(self, *args, **kwargs):

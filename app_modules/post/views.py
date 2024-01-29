@@ -19,7 +19,7 @@ from lib.viewsets import BaseModelViewSet
 from .filters import EventFilter, BusinessPostFilter, BusinessCategoryFilter
 
 
-class CategoeryViewset(BaseModelViewSet):
+class CategoryView(BaseModelViewSet):
     serializer_class = serializers.CategorySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = {
@@ -45,6 +45,16 @@ class CategoeryViewset(BaseModelViewSet):
         subcategories = Category.objects.filter(sub_category=category)
         serializer = self.get_serializer(subcategories, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['delete'], url_path='delete-subcategory/(?P<subcategory_id>[0-9]+)')
+    def delete_subcategory(self, request, subcategory_id=None):
+        try:
+            subcategory = Category.objects.get(pk=subcategory_id, sub_category__isnull=False)
+            subcategory.delete()
+            return Response({"success": True, "message": "Subcategory deleted successfully"},
+                            status=status.HTTP_204_NO_CONTENT)
+        except Category.DoesNotExist:
+            return Response({"success": False, "message": "Subcategory not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class SubcategoryViewSet(viewsets.ReadOnlyModelViewSet):
