@@ -328,7 +328,6 @@ class DeletePastEventsView(APIView):
     def delete(self, request):
         today = date.today()
         events_to_delete = Event.objects.filter(event_date__lt=today)
-        other_posts_to_delete = OtherPost.objects.filter(created__date__lt=today)
 
         for event in events_to_delete:
             posts_to_delete = Post.objects.filter(event=event)
@@ -340,10 +339,6 @@ class DeletePastEventsView(APIView):
             posts_to_delete.delete()
 
         events_to_delete.delete()
-
-        for other_post in other_posts_to_delete:
-            mappings_to_delete = CustomerOtherPostFrameMapping.objects.filter(other_post=other_post)
-            mappings_to_delete.delete()
 
         return Response(
             {'message': 'Successfully deleted past events.'},
