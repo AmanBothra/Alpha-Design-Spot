@@ -29,7 +29,7 @@ def mapping_post_with_customer_frame(sender, instance, created, **kwargs):
         return
 
     customer_group = instance.group
-    customer_frames = customer_group.customer_frame_group.select_related('customer_frame').all()
+    customer_frames = customer_group.customer_frame_group.select_related('category', 'group').all()
 
     customer_frame_mappings = []
     for customer_frame in customer_frames:
