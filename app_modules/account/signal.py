@@ -20,26 +20,34 @@ def mapping_customer_frame_with_post(sender, instance, created, **kwargs):
             group=instance.group, event__in=future_events
         )
 
-        for post in existing_posts:
-            mapping = CustomerPostFrameMapping.objects.filter(
-                customer_frame=instance,
-                post=post
-            ).first()
+        batch_size = 100
+        for i in range(0, len(existing_posts), batch_size):
+            batch_posts = existing_posts[i:i + batch_size]
+            mappings_to_create = []
 
-            if mapping:
-                # Update existing mapping
-                mapping.customer_frame = instance
-                if mapping.is_downloaded:
-                    mapping.is_downloaded = False
-                mapping.save()
-            else:
-                # Create new mapping
-                new_mapping = CustomerPostFrameMapping.objects.create(
-                    customer=instance.customer,
-                    post=post,
+            for post in batch_posts:
+                mapping = CustomerPostFrameMapping.objects.filter(
                     customer_frame=instance,
-                    is_downloaded=False
-                )
+                    post=post
+                ).first()
+
+                if mapping:
+                    # Update existing mapping
+                    mapping.customer_frame = instance
+                    if mapping.is_downloaded:
+                        mapping.is_downloaded = False
+                    mapping.save()
+                else:
+                    # Create new mapping
+                    mappings_to_create.append(CustomerPostFrameMapping(
+                        customer=instance.customer,
+                        post=post,
+                        customer_frame=instance,
+                        is_downloaded=False
+                    ))
+
+            # Bulk create mappings in the current batch
+            CustomerPostFrameMapping.objects.bulk_create(mappings_to_create)
 
 
 @receiver(post_save, sender=CustomerFrame)
@@ -49,27 +57,35 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
             group=instance.group
         )
 
-        for other_post in existing_other_posts:
-            # Try to retrieve an existing mapping for this post and customer frame
-            mapping = CustomerOtherPostFrameMapping.objects.filter(
-                customer_frame=instance,
-                other_post=other_post
-            ).first()
+        batch_size = 100
+        for i in range(0, len(existing_other_posts), batch_size):
+            batch_other_posts = existing_other_posts[i:i + batch_size]
+            mappings_to_create = []
 
-            if mapping:
-                # Update existing mapping
-                mapping.customer_frame = instance
-                if mapping.is_downloaded:
-                    mapping.is_downloaded = False
-                mapping.save()
-            else:
-                # Create new mapping
-                new_mapping = CustomerOtherPostFrameMapping.objects.create(
-                    customer=instance.customer,
-                    other_post=other_post,
+            for other_post in batch_other_posts:
+                # Try to retrieve an existing mapping for this post and customer frame
+                mapping = CustomerOtherPostFrameMapping.objects.filter(
                     customer_frame=instance,
-                    is_downloaded=False
-                )
+                    other_post=other_post
+                ).first()
+
+                if mapping:
+                    # Update existing mapping
+                    mapping.customer_frame = instance
+                    if mapping.is_downloaded:
+                        mapping.is_downloaded = False
+                    mapping.save()
+                else:
+                    # Create new mapping
+                    mappings_to_create.append(CustomerOtherPostFrameMapping(
+                        customer=instance.customer,
+                        other_post=other_post,
+                        customer_frame=instance,
+                        is_downloaded=False
+                    ))
+
+            # Bulk create mappings in the current batch
+            CustomerOtherPostFrameMapping.objects.bulk_create(mappings_to_create)
 
 
 @receiver(post_save, sender=CustomerFrame)
