@@ -46,7 +46,9 @@ def mapping_post_with_customer_frame(sender, instance, created, **kwargs):
 @receiver(post_save, sender=OtherPost)
 def mapping_other_post_with_customer_frame(sender, instance, created, **kwargs):
     customer_group = instance.group
+    print(customer_group, "-----------customer group-----------")
     customer_ids = customer_group.customer_frame_group.values_list('customer_id', flat=True)
+    print(customer_ids, "-----------customer ids-----------")
 
     for customer_id in customer_ids:
         customer_frames = customer_group.customer_frame_group.filter(customer_id=customer_id)
@@ -58,6 +60,7 @@ def mapping_other_post_with_customer_frame(sender, instance, created, **kwargs):
             )
             mapping.is_downloaded = False
             mapping.save()
+            print(mapping, "-----------mapping-----------")
 
 # @receiver(post_save, sender=OtherPost)
 # def mapping_other_post_with_customer_frame(sender, instance, created, **kwargs):

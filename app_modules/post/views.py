@@ -217,7 +217,7 @@ class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
 
         queryset = self.queryset.prefetch_related('customer', 'other_post', 'customer_frame')
         if categoery_id:
-            queryset = queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
+            queryset = queryset.filter(customer=customer, other_post__category=categoery_id)
 
         return queryset
 
