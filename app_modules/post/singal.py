@@ -1,6 +1,7 @@
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.db import transaction
+
 from .models import (
     Post, CustomerPostFrameMapping, CustomerOtherPostFrameMapping, OtherPost, BusinessPost,
     BusinessPostFrameMapping
@@ -69,21 +70,15 @@ def mapping_other_post_with_customer_frame(sender, instance, created, **kwargs):
 
         mappings_to_create = []
         for customer_frame in customer_frames:
-            mapping, created = CustomerOtherPostFrameMapping.objects.get_or_create(
+            mappings_to_create.append(CustomerOtherPostFrameMapping(
                 customer_id=customer_id,
                 other_post=instance,
                 customer_frame=customer_frame,
-                defaults={'is_downloaded': False}
-            )
-            if not created:
-                # Update existing mapping
-                mapping.is_downloaded = False
-                mapping.save()
-            else:
-                mappings_to_create.append(mapping)
+            ))
 
         # Bulk create mappings for the current customer_id
-        CustomerOtherPostFrameMapping.objects.bulk_create(mappings_to_create)
+        with transaction.atomic():
+            CustomerOtherPostFrameMapping.objects.bulk_create(mappings_to_create)
 
 
 # @receiver(post_save, sender=BusinessPost)
