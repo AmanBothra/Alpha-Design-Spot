@@ -78,7 +78,7 @@ class LoginView(APIView):
                     'access': str(refresh.access_token),
                     'id': user.id,
                     'is_verify': user.is_verify,
-                    'mobile_number' : user.whatsapp_number,
+                    'mobile_number': user.whatsapp_number,
                     'is_customer': bool(user.no_of_post <= 1),
                     'is_a_group': is_a_group,
                     'is_expired': bool(is_expired),
@@ -89,22 +89,20 @@ class LoginView(APIView):
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
 
+from django.contrib.auth import logout
+
+
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        try:
-            refresh_token = request.data.get('refresh_token')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            return Response(status=status.HTTP_200_OK)
-        except Exception as e:
-            import traceback
-            print(traceback.format_exc())
-            return Response(
-                data={"message": "There was some issue while logging out", "traceback": str(traceback.format_exc())},
-                status=status.HTTP_400_BAD_REQUEST)
+        logout(request)
+
+        # Delete all session keys associated with the user
+        request.session.flush()
+
+        return Response({'detail': 'Logged out from all devices successfully.'})
+
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.select_related(
@@ -171,7 +169,7 @@ class SendOTP(APIView):
         user_code_email, _ = user.get_or_create_user_code(
             code_type=UserConstants.FORGOTTEN_PASSWORD
         )
-        subject = f"OTP for Email Verification"
+        subject = "OTP for Email Verification"
         message = f"Your email verification OTP is: {user_code_email.code}"
         email_from = settings.EMAIL_HOST_USER
         recipient_list = [
