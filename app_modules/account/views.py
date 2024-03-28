@@ -89,6 +89,23 @@ class LoginView(APIView):
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
 
+class LogoutAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                data={"message": "There was some issue while logging out", "traceback": str(traceback.format_exc())},
+                status=status.HTTP_400_BAD_REQUEST)
+
 class CustomerFrameViewSet(viewsets.ModelViewSet):
     queryset = CustomerFrame.objects.select_related(
         'customer', 'business_category', 'group').all().order_by('-id')
