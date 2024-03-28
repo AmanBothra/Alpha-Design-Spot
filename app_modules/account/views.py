@@ -90,16 +90,18 @@ class LoginView(APIView):
 
 
 from django.contrib.auth import logout
-
-
+from django.contrib.sessions.models import Session
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        logout(request)
+        user_sessions = Session.objects.filter(expire_date__gte=timezone.now())
+        for session in user_sessions:
+            session_data = session.get_decoded()
+            if request.user.id == int(session_data.get('_auth_user_id')):
+                session.delete()
 
-        # Delete all session keys associated with the user
-        request.session.flush()
+        logout(request)
 
         return Response({'detail': 'Logged out from all devices successfully.'})
 
