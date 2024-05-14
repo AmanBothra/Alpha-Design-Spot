@@ -39,12 +39,12 @@ class CategoryView(BaseModelViewSet):
             queryset = Category.objects.filter(other_post_categories__file_type=file_type).distinct()
         return queryset
 
-    @action(detail=True, methods=['get'])
-    def subcategories(self, request, pk=None):
-        category = self.get_object()
-        subcategories = Category.objects.filter(sub_category=category)
-        serializer = self.get_serializer(subcategories, many=True)
-        return Response(serializer.data)
+    # @action(detail=True, methods=['get'])
+    # def subcategories(self, request, pk=None):
+    #     category = self.get_object()
+    #     subcategories = Category.objects.filter(sub_category=category)
+    #     serializer = self.get_serializer(subcategories, many=True)
+    #     return Response(serializer.data)
 
     @action(detail=False, methods=['delete'], url_path='delete-subcategory/(?P<subcategory_id>[0-9]+)')
     def delete_subcategory(self, request, subcategory_id=None):
