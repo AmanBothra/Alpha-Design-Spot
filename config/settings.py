@@ -73,7 +73,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    'config.middleware.LogRequestsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -280,33 +279,79 @@ SWAGGER_SETTINGS = {
 
 # ---------------------------- Logging Configuration ------------------------
 
+# ------------------------------- Logging Configuration ------------------------------
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
+LOGFILE_PATH = os.path.join(LOG_DIR, "ads.log")
+
+U_LOGFILE_NAME = LOGFILE_PATH
+U_LOGFILE_SIZE = 5 * 1024 * 1024
+U_LOGFILE_COUNT = 15
+LOGLEVEL = os.environ.get('LOGLEVEL', 'debug').upper()
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+        'standard': {
+            'format': "[%(asctime)s] %(levelname)s %(message)s [%(name)s:%(lineno)s]",
+            # 'datefmt' : "%d/%b/%Y %H:%M:%S"
         },
+        'basic': {
+            'format': "[%(asctime)s] %(levelname)s %(message)s %(name)s",
+        }
     },
     'handlers': {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/django_requests.log'),
-            'formatter': 'verbose',
+        'logfile': {
+            'level': LOGLEVEL,
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': U_LOGFILE_NAME,
+            'maxBytes': U_LOGFILE_SIZE,
+            'backupCount': U_LOGFILE_COUNT,
+            'formatter': 'standard',
+        },
+        'console': {
+            'level': LOGLEVEL,
+            'class': 'logging.StreamHandler',
+            'formatter': 'basic',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+        'django.request': {
+            'handlers': ['console', 'logfile'],
+            'level': LOGLEVEL,
             'propagate': True,
         },
-        'django.request': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': False,
+        'request_token': {
+            'handlers': ['logfile', 'console'],
+            'level': LOGLEVEL,
+            'propagate': True,
         },
+        'django.server': {
+            'handlers': ['console', 'logfile'],
+            'level': LOGLEVEL,
+            'propagate': True,
+        },
+        'account': {
+            'handlers': ['logfile', 'console'],
+            'level': LOGLEVEL,
+            'propagate': True,
+        },
+        'master': {
+            'handlers': ['logfile', 'console'],
+            'level': LOGLEVEL,
+            'propagate': True,
+        },
+        'post': {
+            'handlers': ['logfile', 'console'],
+            'level': LOGLEVEL,
+            'propagate': True,
+        },
+        'website': {
+            'handlers': ['logfile', 'console'],
+            'level': LOGLEVEL,
+            'propagate': True,
+        }
     },
 }
