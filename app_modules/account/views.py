@@ -94,25 +94,26 @@ class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
-    try:
-        user = request.user
+        
+        try:
+            user = request.user
 
-        # Assuming RefreshToken and AccessToken are iterable or have a method to get the tokens for a user
-        refresh_tokens = RefreshToken.for_user(user)
-        access_tokens = AccessToken.for_user(user)
+            # Assuming RefreshToken and AccessToken are iterable or have a method to get the tokens for a user
+            refresh_tokens = RefreshToken.for_user(user)
+            access_tokens = AccessToken.for_user(user)
 
-        tokens = list(refresh_tokens) + list(access_tokens)
+            tokens = list(refresh_tokens) + list(access_tokens)
 
-        # Create blacklisted tokens in bulk
-        BlacklistedToken.objects.bulk_create(
-            [BlacklistedToken(token=token) for token in tokens],
-            ignore_conflicts=True  # This will ignore duplicates
-        )
+            # Create blacklisted tokens in bulk
+            BlacklistedToken.objects.bulk_create(
+                [BlacklistedToken(token=token) for token in tokens],
+                ignore_conflicts=True  # This will ignore duplicates
+            )
 
-        return Response({"details": "Logged Out"})
+            return Response({"details": "Logged Out"})
 
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
