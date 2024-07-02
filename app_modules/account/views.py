@@ -10,7 +10,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from app_modules.post.models import Post, Category
 from app_modules.post.serializers import BusinessCategorySerializer
@@ -94,17 +94,26 @@ class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-       try:
-           user = request.user
-           refresh_token = RefreshToken.objects.filter(user=user)
-           for token in refresh_token:
+        try:
+            user = request.user
+            refresh_token = RefreshToken.objects.filter(user=user)
+            access_token = AccessToken.objects.filter(user=user)
+            for r_token in refresh_token:
+                try:
+                    BlacklistedToken.objects.get_or_create(token=r_token)
+                except:
+                    continue
+            for a_token in access_token:
                try:
-                   BlacklistedToken.objects.get_or_create(token=token)
+                   BlacklistedToken.objects.get_or_create(token=a_token)
                except:
                    continue
-           return Response({"details": "Loggesd Out"})
-       except Exception as e:
-           return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"details": "Loggesd Out"})
+
+
+        
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
        
 
 
