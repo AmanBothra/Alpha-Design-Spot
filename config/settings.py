@@ -14,8 +14,6 @@ SECRET_KEY = 'django-insecure-n2@ca6*6y)uu%a$_afsnr382fz)ir0m8#$63u8343+_1f$uxvv
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DRF_API_LOGGER_DATABASE = True
-
 # ----------------------- Global Variables Need To be Set in .env ---------------------
 DEBUG = env.bool('DEBUG', default=True)
 DOMAIN = env.str("DOMAIN")
@@ -26,12 +24,9 @@ ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, DOMAIN_IP, 'localhost', "*"]
 AUTH_USER_MODEL = 'account.User'
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env('REDIS_HOST_URL'),
     }
 }
 
@@ -53,15 +48,15 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
     'debug_toolbar',
     "django_celery_results",
-    "drf_api_logger",
+    "django_celery_beat",
 ]
 
 LOCAL_APPS = [
     'config',
-    'app_modules.account.apps.AccountConfig',
-    'app_modules.post.apps.PostConfig',
-    'app_modules.master.apps.MasterConfig',
-    'app_modules.website.apps.WebsiteConfig',
+    'app_modules.account',
+    'app_modules.post',
+    'app_modules.master',
+    'app_modules.website',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -76,8 +71,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    
-    'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -173,8 +166,9 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=365),
     "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=365),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    'TOKEN_BLACKLIST_MODEL': 'rest_framework_simplejwt.token_blacklist.models.BlacklistedToken',
     "UPDATE_LAST_LOGIN": True,
 
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -187,6 +181,7 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_SERIALIZER = "json"
+
 
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
 CORS_ORIGIN_ALLOW_ALL = True
