@@ -92,29 +92,30 @@ class LoginView(APIView):
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def post(self, request):
-        try:
-            user = request.user
-            refresh_token = RefreshToken.objects.filter(user=user)
-            access_token = AccessToken.objects.filter(user=user)
-            for r_token in refresh_token:
-                try:
-                    BlacklistedToken.objects.get_or_create(token=r_token)
-                except:
-                    continue
-            for a_token in access_token:
-               try:
-                   BlacklistedToken.objects.get_or_create(token=a_token)
-               except:
-                   continue
-            return Response({"details": "Loggesd Out"})
+    try:
+        user = request.user
+
+        # Assuming RefreshToken and AccessToken are iterable or have a method to get the tokens for a user
+        refresh_tokens = RefreshToken.for_user(user)
+        access_tokens = AccessToken.for_user(user)
+
+        tokens = list(refresh_tokens) + list(access_tokens)
+
+        # Create blacklisted tokens in bulk
+        BlacklistedToken.objects.bulk_create(
+            [BlacklistedToken(token=token) for token in tokens],
+            ignore_conflicts=True  # This will ignore duplicates
+        )
+
+        return Response({"details": "Logged Out"})
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-        
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-       
+
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
