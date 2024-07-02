@@ -89,21 +89,23 @@ class LoginView(APIView):
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
 
-from django.contrib.auth import logout
-from django.contrib.sessions.models import Session
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        user_sessions = Session.objects.filter(expire_date__gte=timezone.now())
-        for session in user_sessions:
-            session_data = session.get_decoded()
-            if request.user.id == int(session_data.get('_auth_user_id')):
-                session.delete()
-
-        logout(request)
-
-        return Response({'detail': 'Logged out from all devices successfully.'})
+       try:
+           user = request.user
+           refresh_token = RefreshToken.objects.filter(user=user)
+           for token in refresh_token:
+               try:
+                   BlacklistedToken.objects.get_or_create(token=token)
+               except:
+                   continue
+           return Response({"details": "Loggesd Out"})
+       except Exception as e:
+           return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+       
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):
