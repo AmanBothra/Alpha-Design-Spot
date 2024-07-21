@@ -65,7 +65,7 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         customer = validated_data.get('customer')
-        business_category = validated_data.get('business_category')
+        business_category = validated_data.get('business_category', None)
         display_name = validated_data.get('display_name')
         profession_type = validated_data.get('profession_type')
         no_of_post = customer.no_of_post
