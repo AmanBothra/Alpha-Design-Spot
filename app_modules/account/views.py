@@ -11,6 +11,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
 from app_modules.post.models import Post, Category
 from app_modules.post.serializers import BusinessCategorySerializer
@@ -52,44 +53,60 @@ class LoginView(APIView):
 
         user = authenticate(request, username=email, password=password)
 
-        if user is not None:
-            refresh = RefreshToken.for_user(user)
-
-            customer_frame = CustomerFrame.objects.filter(customer=user).first()
-            is_a_group = customer_frame.is_a_group() if customer_frame else False
-
-            current_date = date.today()
-
-            expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
-            if expired_subscription:
-                is_expired = True
-                days_left = None
-            else:
-                is_expired = False
-                if user.subscription_users.exists():
-                    subscription = user.subscription_users.latest('end_date')
-                    days_left = (subscription.end_date - current_date).days
-                else:
-                    days_left = None
-
-            return Response(
-                {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                    'id': user.id,
-                    'is_verify': user.is_verify,
-                    'mobile_number': user.whatsapp_number,
-                    'is_customer': bool(user.no_of_post <= 1),
-                    'is_a_group': is_a_group,
-                    'is_expired': bool(is_expired),
-                    'days_left': days_left
-                }
-            )
-        else:
+        if user is None:
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
+        refresh = RefreshToken.for_user(user)
 
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+        customer_frame = CustomerFrame.objects.filter(customer=user).first()
+        is_a_group = customer_frame.is_a_group() if customer_frame else False
+
+        current_date = date.today()
+        subscription = user.subscription_users.order_by('-end_date').first()
+        
+        if subscription and subscription.end_date >= current_date:
+            is_expired = False
+            days_left = (subscription.end_date - current_date).days
+        else:
+            is_expired = True
+            days_left = None
+        
+        # Collect profession_type and business_category
+        frames = CustomerFrame.objects.filter(customer=user).order_by('business_category__id').distinct()
+        profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
+        business_categories_dict = {}
+        for frame in frames:
+            if frame.business_category and frame.business_category.id not in business_categories_dict:
+                business_categories_dict[frame.business_category.id] = {
+                    'id': frame.business_category.id,
+                    'name': frame.business_category.name
+                }
+        business_categories = list(business_categories_dict.values())
+
+        if user.no_of_post <= 1:
+            profession_type = profession_types[0] if profession_types else None
+            business_category = business_categories[0] if business_categories else None
+        else:
+            profession_type = profession_types
+            business_category = business_categories
+
+        return Response(
+            {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'id': user.id,
+                'is_verify': user.is_verify,
+                'mobile_number': user.whatsapp_number,
+                'is_customer': bool(user.no_of_post <= 1),
+                'is_a_group': is_a_group,
+                'is_expired': is_expired,
+                'days_left': days_left,
+                'profession_type': profession_type,
+                'business_category': business_category,
+            }
+        )
+
+
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
@@ -113,10 +130,6 @@ class LogoutAPIView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 
 
 class CustomerFrameViewSet(viewsets.ModelViewSet):

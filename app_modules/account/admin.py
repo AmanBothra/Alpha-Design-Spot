@@ -7,6 +7,8 @@ from . import models
 class UserAdmin(DefaultUserAdmin):
     list_display = (
         "id",
+        "first_name",
+        "last_name",
         "email",
         "whatsapp_number",
         "is_verify",

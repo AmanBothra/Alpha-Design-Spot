@@ -1,5 +1,5 @@
 import datetime
-
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -88,6 +88,26 @@ def mapping_customer_frame_with_other_posts(sender, instance, created, **kwargs)
             CustomerOtherPostFrameMapping.objects.bulk_create(mappings_to_create)
 
 
+# @receiver(post_save, sender=CustomerFrame)
+# def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
+#     if created:
+#         customer = instance.customer
+#         customer_group = instance.group
+#         profession_type = instance.profession_type
+#         business_category = instance.business_category
+
+#         business_posts = BusinessPost.objects.filter(
+#             business_category=business_category, profession_type=profession_type, group=customer_group
+#         ).select_related('business_category', 'group')
+
+#         for business_post in business_posts:
+#             mapping, _ = BusinessPostFrameMapping.objects.get_or_create(
+#                 customer=customer,
+#                 post=business_post,
+#                 defaults={'customer_frame': instance}
+#             )
+
+
 @receiver(post_save, sender=CustomerFrame)
 def mapping_customer_frame_with_business_posts(sender, instance, created, **kwargs):
     if created:
@@ -100,9 +120,33 @@ def mapping_customer_frame_with_business_posts(sender, instance, created, **kwar
             business_category=business_category, profession_type=profession_type, group=customer_group
         ).select_related('business_category', 'group')
 
-        for business_post in business_posts:
-            mapping, _ = BusinessPostFrameMapping.objects.get_or_create(
-                customer=customer,
-                post=business_post,
-                defaults={'customer_frame': instance}
-            )
+        batch_size = 100
+        for i in range(0, len(business_posts), batch_size):
+            batch_business_posts = business_posts[i:i + batch_size]
+            mappings_to_create = []
+
+            for business_post in batch_business_posts:
+                # Try to retrieve an existing mapping for this post and customer frame
+                mapping = BusinessPostFrameMapping.objects.filter(
+                    customer=customer,
+                    post=business_post
+                ).first()
+
+                if mapping:
+                    # Update existing mapping
+                    mapping.customer_frame = instance
+                    if mapping.is_downloaded:
+                        mapping.is_downloaded = False
+                    mapping.save()
+                else:
+                    # Create new mapping
+                    mappings_to_create.append(BusinessPostFrameMapping(
+                        customer=customer,
+                        post=business_post,
+                        customer_frame=instance,
+                    ))
+
+            # Bulk create mappings in the current batch
+            if mappings_to_create:
+                with transaction.atomic():
+                    BusinessPostFrameMapping.objects.bulk_create(mappings_to_create)

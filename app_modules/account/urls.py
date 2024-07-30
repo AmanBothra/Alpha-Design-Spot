@@ -13,9 +13,9 @@ router.register('payment-method', views.PaymentMethodViewSet, basename='payment-
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('register', views.RegistrationView.as_view(), name='register'),
-    path('login', views.LoginView.as_view(), name='register'),
-    path('logout', views.LogoutAPIView.as_view(), name='logout'),
+    path('register', views.RegistrationView.as_view(), name='register-api'),
+    path('login', views.LoginView.as_view(), name='login-api'),
+    path('logout', views.LogoutAPIView.as_view(), name='logout-api'),
     path('customer-group-list', views.CustomerGroupListApiView.as_view(), name='customer-group-list'),
     path('customer-frame-list', views.CustomerFrameListApiView.as_view(), name='customer-frame-list'),
     path('customer-list', views.CustomerListApiView.as_view(), name='customer-list'),
