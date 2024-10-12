@@ -105,6 +105,7 @@ DATABASES = {
         "HOST": env("DB_HOST"),
         "PORT": 5432,
         "TIME_ZONE": "Asia/Kolkata",
+        'CONN_MAX_AGE': 60,
     }
 }
 
