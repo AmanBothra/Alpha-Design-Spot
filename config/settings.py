@@ -105,7 +105,6 @@ DATABASES = {
         "HOST": env("DB_HOST"),
         "PORT": 5432,
         "TIME_ZONE": "Asia/Kolkata",
-        'CONN_MAX_AGE': 60,
     }
 }
 
@@ -166,7 +165,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=365),
     "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=365),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -182,7 +181,7 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+CELERY_TIMEZONE = 'Asia/Kolkata'
 
 
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
