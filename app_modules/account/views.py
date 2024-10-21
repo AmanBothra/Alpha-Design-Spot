@@ -58,53 +58,55 @@ class LoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
-        customer_frame = CustomerFrame.objects.filter(customer=user).first()
-        is_a_group = customer_frame.is_a_group() if customer_frame else False
+        current_date = timezone.now().date()
 
-        current_date = date.today()
-        subscription = user.subscription_users.order_by('-end_date').first()
-        
-        if subscription and subscription.end_date >= current_date:
-            is_expired = False
-            days_left = (subscription.end_date - current_date).days
-        else:
-            is_expired = True
-            days_left = None
-        
-        # Collect profession_type and business_category
-        frames = CustomerFrame.objects.filter(customer=user).order_by('business_category__id').distinct()
+        user_data = (
+            User.objects.filter(id=user.id)
+            .annotate(
+                is_customer=Value(F('no_of_post') <= 1, output_field=BooleanField()),
+                is_expired=Coalesce(F('subscription_users__end_date__lt', current_date), True),
+                days_left=Coalesce(F('subscription_users__end_date') - current_date, None),
+            )
+            .prefetch_related(
+                Prefetch(
+                    'customer_frames',
+                    queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
+                    to_attr='frames'
+                )
+            )
+            .first()
+        )
+
+        frames = user_data.frames
+        is_a_group = frames[0].is_a_group() if frames else False
+
         profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
-        business_categories_dict = {}
-        for frame in frames:
-            if frame.business_category and frame.business_category.id not in business_categories_dict:
-                business_categories_dict[frame.business_category.id] = {
-                    'id': frame.business_category.id,
-                    'name': frame.business_category.name
-                }
-        business_categories = list(business_categories_dict.values())
+        business_categories = list({
+            frame.business_category.id: {
+                'id': frame.business_category.id,
+                'name': frame.business_category.name
+            }
+            for frame in frames if frame.business_category
+        }.values())
 
-        if user.no_of_post <= 1:
-            profession_type = profession_types[0] if profession_types else None
+        if user_data.is_customer:
             business_category = business_categories[0] if business_categories else None
         else:
-            profession_type = profession_types
             business_category = business_categories
 
-        return Response(
-            {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'id': user.id,
-                'is_verify': user.is_verify,
-                'mobile_number': user.whatsapp_number,
-                'is_customer': bool(user.no_of_post <= 1),
-                'is_a_group': is_a_group,
-                'is_expired': is_expired,
-                'days_left': days_left,
-                'profession_type': profession_type,
-                'business_category': business_category,
-            }
-        )
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'id': user.id,
+            'is_verify': user.is_verify,
+            'mobile_number': user.whatsapp_number,
+            'is_customer': user_data.is_customer,
+            'is_a_group': is_a_group,
+            'is_expired': user_data.is_expired,
+            'days_left': user_data.days_left,
+            'profession_type': profession_types,
+            'business_category': business_category,
+        })
 
 
 class LogoutAPIView(APIView):
