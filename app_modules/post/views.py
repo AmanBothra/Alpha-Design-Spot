@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.core.cache import cache
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -10,6 +11,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from account.models import CustomerGroup
 
 from app_modules.post import serializers
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, \
@@ -152,7 +154,7 @@ class OtherPostViewset(BaseModelViewSet):
     search_fields = ['group__name', 'category__name', 'file_type']
 
 
-class BusinessPostViewset(BaseModelViewSet):
+class BusinessPostViewset(viewsets.ModelViewSet):
     serializer_class = serializers.BusinessPostSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = [
@@ -162,17 +164,23 @@ class BusinessPostViewset(BaseModelViewSet):
 
     def get_queryset(self):
         file_type = self.request.query_params.get('file_type')
-        queryset = BusinessPost.objects.select_related('business_category', 'group').all()
+        
+        if self.request.user.user_type == 'admin':
+            queryset = BusinessPost.objects.select_related('business_category', 'group').all()
+        else:
+            user_groups = CustomerGroup.objects.filter(
+                customer_frame_group__customer=self.request.user
+            ).distinct()
+
+            # Filter BusinessPost objects based on these groups
+            queryset = BusinessPost.objects.select_related('business_category', 'group').filter(
+                Q(group__in=user_groups)
+            ).distinct()
 
         if file_type in ["image", "video"]:
             queryset = queryset.filter(file_type=file_type)
 
         return queryset
-
-    def get_serializer_context(self):
-        context = super(BusinessPostViewset, self).get_serializer_context()
-        return context
-
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):
     queryset = CustomerPostFrameMapping.objects
