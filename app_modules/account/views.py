@@ -1,5 +1,6 @@
 from datetime import date, timedelta
-
+from django.db.models import Prefetch, F, Value, BooleanField
+from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
