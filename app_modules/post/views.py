@@ -182,16 +182,20 @@ class BusinessPostViewset(viewsets.ModelViewSet):
 
         return queryset
     
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+    # def list(self, request, *args, **kwargs):
+    #     queryset = self.filter_queryset(self.get_queryset())
         
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response({'results': serializer.data})
+    #     if request.user.user_type != 'admin':
+    #         page = self.paginate_queryset(queryset)
+    #         if page is not None:
+    #             serializer = self.get_serializer(page, many=True)
+    #             return Response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({'results': serializer.data})
+    #         serializer = self.get_serializer(queryset, many=True)
+    #         return Response(serializer.data)
+        
+    #     return super().list(request, *args, **kwargs)
+    
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):
     queryset = CustomerPostFrameMapping.objects
