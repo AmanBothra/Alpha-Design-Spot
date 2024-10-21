@@ -1,5 +1,6 @@
 from datetime import date, timedelta
-from django.db.models import Prefetch, F, Value, BooleanField
+from django.db.models import Prefetch, F, Value, BooleanField, Case, When, Q
+
 from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -45,6 +46,7 @@ class RegistrationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -64,9 +66,21 @@ class LoginView(APIView):
         user_data = (
             User.objects.filter(id=user.id)
             .annotate(
-                is_customer=Value(F('no_of_post') <= 1, output_field=BooleanField()),
-                is_expired=Coalesce(F('subscription_users__end_date__lt', current_date), True),
-                days_left=Coalesce(F('subscription_users__end_date') - current_date, None),
+                is_customer=Case(
+                    When(no_of_post__lte=1, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                is_expired=Case(
+                    When(Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                days_left=Case(
+                    When(subscription_users__end_date__gte=current_date, 
+                         then=F('subscription_users__end_date') - current_date),
+                    default=None
+                )
             )
             .prefetch_related(
                 Prefetch(
@@ -105,7 +119,7 @@ class LoginView(APIView):
             'is_a_group': is_a_group,
             'is_expired': user_data.is_expired,
             'days_left': user_data.days_left,
-            'profession_type': profession_types,
+            'profession_type': profession_types,  # Always return as a list
             'business_category': business_category,
         })
 
