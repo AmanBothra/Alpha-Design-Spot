@@ -96,18 +96,7 @@ class LoginView(APIView):
         is_a_group = frames[0].is_a_group() if frames else False
 
         profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
-        business_categories = list({
-            frame.business_category.id: {
-                'id': frame.business_category.id,
-                'name': frame.business_category.name
-            }
-            for frame in frames if frame.business_category
-        }.values())
 
-        if user_data.is_customer:
-            business_category = business_categories[0] if business_categories else None
-        else:
-            business_category = business_categories
 
         return Response({
             'refresh': str(refresh),
@@ -119,8 +108,7 @@ class LoginView(APIView):
             'is_a_group': is_a_group,
             'is_expired': user_data.is_expired,
             'days_left': user_data.days_left,
-            'profession_type': profession_types,  # Always return as a list
-            'business_category': business_category,
+            'profession_type': profession_types
         })
 
 
