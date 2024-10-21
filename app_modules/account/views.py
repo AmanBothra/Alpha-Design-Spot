@@ -84,7 +84,7 @@ class LoginView(APIView):
             )
             .prefetch_related(
                 Prefetch(
-                    'customer_frames',
+                    'customer_frame',
                     queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
                     to_attr='frames'
                 )
