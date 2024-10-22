@@ -1,10 +1,11 @@
 from datetime import date, timedelta
-from django.db.models import Prefetch, F, Value, BooleanField, Case, When, Q
+from django.db.models import Prefetch, F, Value, BooleanField, Case, When, Q, ExpressionWrapper
 
 from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
+from django.forms import IntegerField
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, viewsets, exceptions, status
@@ -76,11 +77,6 @@ class LoginView(APIView):
                     default=Value(False),
                     output_field=BooleanField()
                 ),
-                days_left=Case(
-                    When(subscription_users__end_date__gte=current_date, 
-                         then=F('subscription_users__end_date') - current_date),
-                    default=None
-                )
             )
             .prefetch_related(
                 Prefetch(
@@ -92,11 +88,17 @@ class LoginView(APIView):
             .first()
         )
 
+        # Calculate days left as a simple subtraction
+        # Calculate days left
+        subscription = user.subscription_users.first()
+        days_left = 0
+        if subscription and subscription.end_date >= current_date:
+            days_left = (subscription.end_date - current_date).days
+
         frames = user_data.frames
         is_a_group = frames[0].is_a_group() if frames else False
 
         profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
-
 
         return Response({
             'refresh': str(refresh),
@@ -107,11 +109,10 @@ class LoginView(APIView):
             'is_customer': user_data.is_customer,
             'is_a_group': is_a_group,
             'is_expired': user_data.is_expired,
-            'days_left': user_data.days_left,
+            'days_left': days_left,
             'profession_type': profession_types
         })
-
-
+        
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
