@@ -2,7 +2,7 @@ from celery import shared_task
 from django.db import transaction
 from .models import *
 
-@shared_task
+# @shared_task
 def map_post_with_customer_frames(post_id):
     try:
         instance = Post.objects.get(id=post_id)
@@ -23,7 +23,7 @@ def map_post_with_customer_frames(post_id):
     with transaction.atomic():
         CustomerPostFrameMapping.objects.bulk_create(customer_frame_mappings)
     
-@shared_task
+# @shared_task
 def map_other_post_with_customer_frames(other_post_id):
     try:
         instance = OtherPost.objects.get(id=other_post_id)
@@ -48,7 +48,7 @@ def map_other_post_with_customer_frames(other_post_id):
         with transaction.atomic():
             CustomerOtherPostFrameMapping.objects.bulk_create(mappings_to_create)
 
-@shared_task
+# @shared_task
 def map_business_post_with_customer_frames(business_post_id):
     try:
         instance = BusinessPost.objects.get(id=business_post_id)

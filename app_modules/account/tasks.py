@@ -3,7 +3,7 @@ from django.db import transaction
 from app_modules.post.models import *
 import datetime
 
-@shared_task
+# @shared_task
 def mapping_customer_frame_with_post(customer_frame_id):
     try:
         instance = CustomerFrame.objects.get(id=customer_frame_id)
@@ -43,7 +43,7 @@ def mapping_customer_frame_with_post(customer_frame_id):
     return f"Mapping completed for CustomerFrame with id {customer_frame_id}"
 
 
-@shared_task
+# @shared_task
 def mapping_customer_frame_with_other_posts(customer_frame_id):
     try:
         instance = CustomerFrame.objects.get(id=customer_frame_id)
@@ -80,7 +80,7 @@ def mapping_customer_frame_with_other_posts(customer_frame_id):
     return f"Mapping completed for CustomerFrame with id {customer_frame_id}"
 
 
-@shared_task
+# @shared_task
 def map_customer_frame_with_business_posts(customer_frame_id):
     try:
         instance = CustomerFrame.objects.get(id=customer_frame_id)

@@ -8,7 +8,8 @@ from .models import *
 @receiver(post_save, sender=Post)
 def trigger_post_mapping(sender, instance, created, **kwargs):
     if created:
-        map_post_with_customer_frames.delay(instance.id)
+        # map_post_with_customer_frames.delay(instance.id)
+        map_post_with_customer_frames(instance.id)
 
 
 # @receiver(post_save, sender=Post)
@@ -33,7 +34,8 @@ def trigger_post_mapping(sender, instance, created, **kwargs):
 @receiver(post_save, sender=OtherPost)
 def trigger_other_post_mapping(sender, instance, created, **kwargs):
     if created:
-        map_other_post_with_customer_frames.delay(instance.id)
+        # map_other_post_with_customer_frames.delay(instance.id)
+        map_other_post_with_customer_frames(instance.id)
         
 
 # @receiver(post_save, sender=OtherPost)
@@ -59,7 +61,9 @@ def trigger_other_post_mapping(sender, instance, created, **kwargs):
 @receiver(post_save, sender=BusinessPost)
 def trigger_business_post_mapping(sender, instance, created, **kwargs):
     if created:
-        map_business_post_with_customer_frames.delay(instance.id)
+        # map_business_post_with_customer_frames.delay(instance.id)
+        map_business_post_with_customer_frames(instance.id)
+        
 
 # @receiver(post_save, sender=BusinessPost)
 # def mapping_business_post_with_customer_frame(sender, instance, created, **kwargs):
