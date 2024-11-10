@@ -188,21 +188,6 @@ class BusinessPostViewset(viewsets.ModelViewSet):
             queryset = queryset.filter(file_type=file_type)
 
         return queryset
-
-    
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.filter_queryset(self.get_queryset())
-        
-    #     if request.user.user_type != 'admin':
-    #         page = self.paginate_queryset(queryset)
-    #         if page is not None:
-    #             serializer = self.get_serializer(page, many=True)
-    #             return Response(serializer.data)
-
-    #         serializer = self.get_serializer(queryset, many=True)
-    #         return Response(serializer.data)
-        
-    #     return super().list(request, *args, **kwargs)
     
 
 class CustomerPostFrameMappingViewSet(BaseModelViewSet):
@@ -253,28 +238,6 @@ class CustomerOtherPostFrameMappingViewSet(BaseModelViewSet):
         return queryset
 
 
-# class BusinessPostFrameMappingViewSet(BaseModelViewSet):
-#     queryset = BusinessPostFrameMapping.objects
-#     serializer_class = serializers.BusinessPostFrameMappingSerializer
-#     filter_backends = [DjangoFilterBackend, SearchFilter]
-#     filterset_fields = ['is_downloaded']
-#     http_method_names = ['get', 'patch']
-
-#     def get_serializer_context(self):
-#         context = super(BusinessPostFrameMappingViewSet, self).get_serializer_context()
-#         context["user"] = self.request.user
-#         return context
-
-#     def get_queryset(self):
-#         customer = self.request.user
-#         business_post_id = self.request.query_params.get('business_post_id')
-
-#         queryset = self.queryset.prefetch_related('customer', 'post', 'customer_frame')
-#         if business_post_id:
-#             queryset = queryset.filter(customer=customer)
-
-#         return queryset
-
 class BusinessPostFrameMappingViewSet(BaseModelViewSet):
     queryset = BusinessPostFrameMapping.objects
     serializer_class = serializers.BusinessPostFrameMappingSerializer
@@ -289,36 +252,14 @@ class BusinessPostFrameMappingViewSet(BaseModelViewSet):
 
     def get_queryset(self):
         customer = self.request.user
-        profession_type = self.request.query_params.get('profession_type')
         business_post_id = self.request.query_params.get('business_post_id')
 
-        # Ensure profession_type filter is applied
-        if not profession_type:
-            return self.queryset.none()  # No data returned if profession_type is not specified
-
-        # Fetch assigned categories for the customer with the specified profession_type
-        assigned_categories = CustomerFrame.objects.filter(
-            customer=customer, profession_type=profession_type
-        ).values_list('business_category', flat=True).distinct()
-
-        # Get user groups associated with the specified profession type
-        user_groups = CustomerGroup.objects.filter(
-            customer_frame_group__customer=customer,
-            customer_frame_group__profession_type=profession_type
-        ).distinct()
-
-        # Filter BusinessPostFrameMapping based on user groups and assigned categories for the specified profession type
-        queryset = self.queryset.prefetch_related('customer', 'post', 'customer_frame').filter(
-            Q(customer=customer) &
-            Q(post__group__in=user_groups) &
-            Q(post__business_category__in=assigned_categories)
-        ).distinct()
-
-        # Further filter by business_post_id if provided
+        queryset = self.queryset.prefetch_related('customer', 'post', 'customer_frame')
         if business_post_id:
-            queryset = queryset.filter(post_id=business_post_id)
+            queryset = queryset.filter(customer=customer, post__business_category=business_post_id)
 
         return queryset
+
 
 
 class EventListApiView(ListAPIView):
