@@ -11,7 +11,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from account.models import CustomerGroup
+from account.models import CustomerGroup, CustomerFrame
 
 from app_modules.post import serializers
 from app_modules.post.models import Category, Event, Post, OtherPost, CustomerPostFrameMapping, \
@@ -164,23 +164,31 @@ class BusinessPostViewset(viewsets.ModelViewSet):
 
     def get_queryset(self):
         file_type = self.request.query_params.get('file_type')
-        
-        if self.request.user.user_type == 'admin':
+        user = self.request.user
+
+        # Get the assigned categories for the user from the login data
+        assigned_categories = CustomerFrame.objects.filter(
+            customer=user
+        ).values_list('business_category', flat=True).distinct()
+
+        if user.user_type == 'admin':
             queryset = BusinessPost.objects.select_related('business_category', 'group').all()
         else:
+            # Filter the queryset by user groups and assigned categories
             user_groups = CustomerGroup.objects.filter(
-                customer_frame_group__customer=self.request.user
+                customer_frame_group__customer=user
             ).distinct()
 
-            # Filter BusinessPost objects based on these groups
             queryset = BusinessPost.objects.select_related('business_category', 'group').filter(
-                Q(group__in=user_groups)
+                Q(group__in=user_groups) & Q(business_category__in=assigned_categories)
             ).distinct()
 
+        # Further filter by file_type if specified
         if file_type in ["image", "video"]:
             queryset = queryset.filter(file_type=file_type)
 
         return queryset
+
     
     # def list(self, request, *args, **kwargs):
     #     queryset = self.filter_queryset(self.get_queryset())
