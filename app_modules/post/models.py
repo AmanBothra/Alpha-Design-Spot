@@ -116,44 +116,64 @@ class BusinessPost(BaseModel):
 
 
 class CustomerPostFrameMapping(BaseModel):
-    customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="frame_mapping")
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="frame_mapping",
+        db_index=True
+    )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="post_mapping"
+        related_name="post_mapping",
+        db_index=True
     )
     customer_frame = models.ForeignKey(
         CustomerFrame,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="customer_frame_mapping"
+        related_name="customer_frame_mapping",
+        db_index=True
     )
     is_downloaded = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.customer.whatsapp_number
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer', 'post', 'customer_frame']),
+        ]
 
 
 class CustomerOtherPostFrameMapping(BaseModel):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
-                                 related_name="other_post_frame_mapping")
+                                 related_name="other_post_frame_mapping", db_index=True)
     other_post = models.ForeignKey(
         OtherPost,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="other_post_mapping"
+        related_name="other_post_mapping",
+        db_index=True
     )
     customer_frame = models.ForeignKey(
         CustomerFrame,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="customer_other_post_frame_mapping"
+        related_name="customer_other_post_frame_mapping",
+        db_index=True
     )
     is_downloaded = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.customer.whatsapp_number
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer', 'other_post', 'customer_frame']),
+        ]
 
 
 class BusinessPostFrameMapping(BaseModel):
@@ -161,20 +181,28 @@ class BusinessPostFrameMapping(BaseModel):
         User,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="business_post_frame_mapping"
+        related_name="business_post_frame_mapping",
+        db_index=True
     )
     post = models.ForeignKey(
         BusinessPost,
         on_delete=models.CASCADE,
         null=True, blank=True,
-        related_name="business_post_mapping"
+        related_name="business_post_mapping",
+        db_index=True
     )
     customer_frame = models.ForeignKey(
         CustomerFrame,
         on_delete=models.CASCADE,
         null=True, blank=True,
+        db_index=True
     )
     is_downloaded = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return self.customer.whatsapp_number
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer', 'post', 'customer_frame']),
+        ]
