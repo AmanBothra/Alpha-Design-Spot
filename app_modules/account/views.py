@@ -103,8 +103,8 @@ class LoginView(APIView):
                 thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
                 category_data = {
                     "id": category.id,
-                    "name": category.name,
-                    "thumbnail": thumbnail_url
+                    "business_sub_category_name": category.name,
+                    "file": thumbnail_url
                 }
                 if profession_type not in profession_types:
                     profession_types[profession_type] = {"name": profession_type, "categories": []}
