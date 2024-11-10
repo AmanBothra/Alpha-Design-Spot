@@ -99,7 +99,13 @@ class LoginView(APIView):
         is_a_group = frames[0].is_a_group() if frames else False
 
         profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
-        business_category = list(set(frame.business_category for frame in frames if frame.business_category))
+        
+        # Collect unique business categories
+        business_categories = [
+            {"id": frame.business_category.id, "name": frame.business_category.name}
+            for frame in frames if frame.business_category
+        ]
+        business_categories = {v['id']: v for v in business_categories}.values()
         
         return Response({
             'refresh': str(refresh),
@@ -112,7 +118,7 @@ class LoginView(APIView):
             'is_expired': user_data.is_expired,
             'days_left': days_left,
             'profession_type': profession_types,
-            'business_category': business_category
+            'business_categories': list(business_categories)
         })
         
 class LogoutAPIView(APIView):
