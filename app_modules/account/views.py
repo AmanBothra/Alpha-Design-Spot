@@ -56,14 +56,13 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         user = authenticate(request, username=email, password=password)
-
         if user is None:
             raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
 
         refresh = RefreshToken.for_user(user)
-
         current_date = timezone.now().date()
 
+        # Fetch user data with annotations and related frames
         user_data = (
             User.objects.filter(id=user.id)
             .annotate(
@@ -73,7 +72,10 @@ class LoginView(APIView):
                     output_field=BooleanField()
                 ),
                 is_expired=Case(
-                    When(Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), then=Value(True)),
+                    When(
+                        Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
+                        then=Value(True)
+                    ),
                     default=Value(False),
                     output_field=BooleanField()
                 ),
@@ -88,25 +90,29 @@ class LoginView(APIView):
             .first()
         )
 
-        # Calculate days left as a simple subtraction
-        # Calculate days left
+        # Calculate days left in subscription
         subscription = user.subscription_users.first()
-        days_left = 0
-        if subscription and subscription.end_date >= current_date:
-            days_left = (subscription.end_date - current_date).days
+        days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
 
-        frames = user_data.frames
-        is_a_group = frames[0].is_a_group() if frames else False
+        # Organize frames by profession type with full thumbnail URLs
+        profession_types = {}
+        for frame in user_data.frames:
+            category = frame.business_category
+            if category:
+                profession_type = frame.profession_type
+                thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
+                category_data = {
+                    "id": category.id,
+                    "name": category.name,
+                    "thumbnail": thumbnail_url
+                }
+                if profession_type not in profession_types:
+                    profession_types[profession_type] = {"name": profession_type, "categories": []}
+                profession_types[profession_type]["categories"].append(category_data)
 
-        profession_types = list(set(frame.profession_type for frame in frames if frame.profession_type))
-        
-        # Collect unique business categories
-        business_categories = [
-            {"id": frame.business_category.id, "name": frame.business_category.name}
-            for frame in frames if frame.business_category
-        ]
-        business_categories = {v['id']: v for v in business_categories}.values()
-        
+        # Convert profession_types dictionary to a list for response
+        profession_types_list = list(profession_types.values())
+
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
@@ -114,13 +120,13 @@ class LoginView(APIView):
             'is_verify': user.is_verify,
             'mobile_number': user.whatsapp_number,
             'is_customer': user_data.is_customer,
-            'is_a_group': is_a_group,
+            'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
             'is_expired': user_data.is_expired,
             'days_left': days_left,
-            'profession_type': profession_types,
-            'business_categories': list(business_categories)
+            'profession_types': profession_types_list  # List with profession type and associated categories
         })
-        
+
+       
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
