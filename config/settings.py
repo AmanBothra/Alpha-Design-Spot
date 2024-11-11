@@ -50,6 +50,7 @@ THIRD_PARTY_APPS = [
     'debug_toolbar',
     "django_celery_results",
     "django_celery_beat",
+    "silk",
 ]
 
 LOCAL_APPS = [
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "config.middleware.APILoggingMiddleware",
+    "silk.middleware.SilkyMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'

@@ -28,6 +28,7 @@ admin.site.index_title = "Site administration"
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('silk/', include('silk.urls', namespace='silk')),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path("__debug__/", include("debug_toolbar.urls")),
     # jwt
