@@ -50,7 +50,7 @@ class Post(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.event.name} and group is {self.group.name}"
+        return f"Post {self.id}"
     
     def save(self, *args, **kwargs):
         if self.file_type == 'image':
@@ -140,7 +140,7 @@ class CustomerPostFrameMapping(BaseModel):
     is_downloaded = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return self.customer.whatsapp_number
+        return f"Mapping {self.id}"
     
     class Meta:
         indexes = [

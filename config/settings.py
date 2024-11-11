@@ -302,6 +302,12 @@ LOGGING = {
             'filename': 'api_requests.log',
             'formatter': 'verbose',
         },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'api_errors.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
@@ -310,9 +316,15 @@ LOGGING = {
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['file'],
+            'handlers': ['file', 'error_file'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'api_errors': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
             'propagate': False,
         },
     },
 }
+

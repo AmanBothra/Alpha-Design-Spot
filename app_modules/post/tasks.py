@@ -5,7 +5,7 @@ from .models import *
 # @shared_task
 def map_post_with_customer_frames(post_id):
     try:
-        instance = Post.objects.get(id=post_id)
+        instance = Post.objects.select_related('event', 'group').get(id=post_id)
     except Post.DoesNotExist:
         return f"Post with id {post_id} does not exist."
 
