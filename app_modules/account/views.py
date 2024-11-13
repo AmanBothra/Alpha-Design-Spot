@@ -376,36 +376,18 @@ class DashboardApi(APIView):
 class MobileDashboardApi(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
-        current_date = date.today()
+        current_date = timezone.now().date()
 
-        expired_subscription = Subscription.objects.filter(end_date__lt=current_date, user=user).exists()
-        if expired_subscription:
-            is_expired = True
-            days_left = None
-        else:
-            is_expired = False
-            if user.subscription_users.exists():
-                subscription = user.subscription_users.latest('end_date')
-                days_left = (subscription.end_date - current_date).days
-            else:
-                days_left = None
-
-        # Retrieve the categories assigned to the user's CustomerFrame objects
-        user_customer_frames = CustomerFrame.objects.filter(customer=user)
-        assigned_business_categories = []
-        for frame in user_customer_frames:
-            if frame.business_category:
-                assigned_business_categories.append(frame.business_category)
-
-        # Serialize the assigned business categories
-        category_serializer = BusinessCategorySerializer(assigned_business_categories, many=True)
+        # Determine if the subscription is expired and calculate days left
+        subscription = user.subscription_users.order_by('-end_date').first()
+        is_expired = not subscription or subscription.end_date < current_date
+        days_left = (subscription.end_date - current_date).days if subscription and not is_expired else None
 
         data = {
             'id': user.id,
             'is_verify': user.is_verify,
             'is_expired': is_expired,
             'days_left': days_left,
-            'assigned_business_categories': category_serializer.data,
         }
 
         return Response(data)
