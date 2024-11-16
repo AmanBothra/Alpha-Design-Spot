@@ -1,5 +1,4 @@
 from celery import shared_task
-from django.db import transaction
 from silk.profiling.profiler import silk_profile
 from .models import *
 
@@ -26,7 +25,6 @@ def map_post_with_customer_frames(post_id):
         ]
 
     with silk_profile(name='Bulk Create Mappings'):
-        with transaction.atomic():
             CustomerPostFrameMapping.objects.bulk_create(
                 customer_frame_mappings, 
                 batch_size=200
@@ -74,10 +72,9 @@ def map_other_post_with_customer_frames(other_post_id):
 
         with silk_profile(name='Bulk Create All Mappings'):
             # Bulk create all mappings with batch_size
-            with transaction.atomic():
                 CustomerOtherPostFrameMapping.objects.bulk_create(
                     all_mappings, 
-                    batch_size=1000
+                    batch_size=350
                 )
 
 # @shared_task
@@ -132,8 +129,7 @@ def map_business_post_with_customer_frames(business_post_id):
 
         with silk_profile(name='Bulk Create New Mappings'):
             # Bulk create all mappings in batches
-            with transaction.atomic():
                 BusinessPostFrameMapping.objects.bulk_create(
                     mappings_to_create, 
-                    batch_size=1000
+                    batch_size=350
                 )
