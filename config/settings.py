@@ -187,10 +187,10 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
 
 
-FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = [
-    FRONT_END_DOMAIN
+    "https://dashboard.alphawala.xyz",
+    "http://localhost:3000"
 ]
 CORS_ALLOW_HEADERS = [
     "accept",
