@@ -18,7 +18,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DEBUG = env.bool('DEBUG', default=True)
 DOMAIN = env.str("DOMAIN")
 DOMAIN_IP = env.str("DOMAIN_IP")
-ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, DOMAIN_IP, 'localhost', "*"]
+ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, 'localhost']
 
 
 AUTH_USER_MODEL = 'account.User'
@@ -188,7 +188,7 @@ CELERY_TIMEZONE = 'Asia/Kolkata'
 
 
 FRONT_END_DOMAIN = env.str("FRONT_END_DOMAIN", default="http://localhost:3000")
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = [
     FRONT_END_DOMAIN
 ]
