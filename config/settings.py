@@ -64,6 +64,8 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "silk.middleware.SilkyMiddleware",
+    "config.middleware.APILoggingMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -72,9 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-    "config.middleware.APILoggingMiddleware",
-    "silk.middleware.SilkyMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",    
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -327,4 +327,15 @@ LOGGING = {
         },
     },
 }
+
+# 4. Configure Silk Settings in settings.py
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_ANALYZE_QUERIES = True
+# SILKY_AUTHENTICATION = True  # Requires users to login
+# SILKY_AUTHORISATION = True  # Permission based
+# SILKY_META = True  # Silk records SQL queries
+# SILKY_INTERCEPT_PERCENT = 100  # Percentage of requests to intercept
+# SILKY_MAX_RECORDED_REQUESTS = 1000  # Number of requests to keep
+# SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
 
