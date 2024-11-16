@@ -18,7 +18,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DEBUG = env.bool('DEBUG', default=True)
 DOMAIN = env.str("DOMAIN")
 DOMAIN_IP = env.str("DOMAIN_IP")
-ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', DOMAIN, DOMAIN_IP, 'localhost']
 
 
 AUTH_USER_MODEL = 'account.User'
@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    "config.middleware.APILoggingMiddleware",
+    # "config.middleware.APILoggingMiddleware",
     "silk.middleware.SilkyMiddleware",
 ]
 
