@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    # "config.middleware.APILoggingMiddleware",
+    "config.middleware.APILoggingMiddleware",
     "silk.middleware.SilkyMiddleware",
 ]
 
