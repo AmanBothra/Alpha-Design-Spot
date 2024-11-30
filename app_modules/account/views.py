@@ -54,100 +54,86 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-
-        try:
-            # First check if user exists and is soft deleted
-            user_exists = User.objects.filter(email=email).first()
-            if user_exists and user_exists.is_deleted:
-                return Response({
-                    'status': False,
-                    'message': 'This account has been deleted. Please contact support for assistance.',
-                    'deleted_at': user_exists.deleted_at
-                }, status=status.HTTP_403_FORBIDDEN)
-
-            # Proceed with normal authentication
-            user = authenticate(request, username=email, password=password)
-            if user is None:
-                return Response({
-                    'status': False,
-                    'message': 'Invalid email or password'
-                }, status=status.HTTP_401_UNAUTHORIZED)
-
-            current_date = timezone.now().date()
-
-            # Fetch user data with annotations and related frames
-            user_data = (
-                User.objects.filter(id=user.id)
-                .annotate(
-                    is_customer=Case(
-                        When(no_of_post__lte=1, then=Value(True)),
-                        default=Value(False),
-                        output_field=BooleanField()
-                    ),
-                    is_expired=Case(
-                        When(
-                            Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
-                            then=Value(True)
-                        ),
-                        default=Value(False),
-                        output_field=BooleanField()
-                    ),
-                )
-                .prefetch_related(
-                    Prefetch(
-                        'customer_frame',
-                        queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
-                        to_attr='frames'
-                    )
-                )
-                .first()
-            )
-
-            # Calculate days left in subscription
-            subscription = user.subscription_users.first()
-            days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
-
-            # Organize frames by profession type with full thumbnail URLs
-            profession_types = {}
-            for frame in user_data.frames:
-                category = frame.business_category
-                if category:
-                    profession_type = frame.profession_type
-                    thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
-                    category_data = {
-                        "id": category.id,
-                        "business_sub_category_name": category.name,
-                        "file": thumbnail_url
-                    }
-                    if profession_type not in profession_types:
-                        profession_types[profession_type] = {"name": profession_type, "categories": []}
-                    profession_types[profession_type]["categories"].append(category_data)
-
-            # Convert profession_types dictionary to a list for response
-            profession_types_list = list(profession_types.values())
-
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-
-            return Response({
-                'status': True,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'id': user.id,
-                'is_verify': user.is_verify,
-                'mobile_number': user.whatsapp_number,
-                'is_customer': user_data.is_customer,
-                'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
-                'is_expired': user_data.is_expired,
-                'days_left': days_left,
-                'profession_types': profession_types_list
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
+        
+        user_exists = User.objects.filter(email=email).first()
+        if user_exists and user_exists.is_deleted:
             return Response({
                 'status': False,
-                'message': 'An error occurred during login. Please try again.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'message': 'This account has been deleted. Please contact support for assistance.',
+                'deleted_at': user_exists.deleted_at
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        user = authenticate(request, username=email, password=password)
+        if user is None:
+            raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
+
+        refresh = RefreshToken.for_user(user)
+        current_date = timezone.now().date()
+
+        # Fetch user data with annotations and related frames
+        user_data = (
+            User.objects.filter(id=user.id)
+            .annotate(
+                is_customer=Case(
+                    When(no_of_post__lte=1, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+                is_expired=Case(
+                    When(
+                        Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
+                        then=Value(True)
+                    ),
+                    default=Value(False),
+                    output_field=BooleanField()
+                ),
+            )
+            .prefetch_related(
+                Prefetch(
+                    'customer_frame',
+                    queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
+                    to_attr='frames'
+                )
+            )
+            .first()
+        )
+
+        # Calculate days left in subscription
+        subscription = user.subscription_users.first()
+        days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
+
+        # Organize frames by profession type with full thumbnail URLs
+        profession_types = {}
+        for frame in user_data.frames:
+            category = frame.business_category
+            if category:
+                profession_type = frame.profession_type
+                thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
+                category_data = {
+                    "id": category.id,
+                    "business_sub_category_name": category.name,
+                    "file": thumbnail_url
+                }
+                if profession_type not in profession_types:
+                    profession_types[profession_type] = {"name": profession_type, "categories": []}
+                profession_types[profession_type]["categories"].append(category_data)
+
+        # Convert profession_types dictionary to a list for response
+        profession_types_list = list(profession_types.values())
+
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'id': user.id,
+            'is_verify': user.is_verify,
+            'mobile_number': user.whatsapp_number,
+            'is_customer': user_data.is_customer,
+            'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
+            'is_expired': user_data.is_expired,
+            'days_left': days_left,
+            'profession_types': profession_types_list  # List with profession type and associated categories
+        })
+
        
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
