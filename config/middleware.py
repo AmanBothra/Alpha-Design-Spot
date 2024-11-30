@@ -1,10 +1,10 @@
 import logging
 import json
 from datetime import datetime
+import pytz
 
 logger = logging.getLogger('django.request')
 error_logger = logging.getLogger('api_errors')
-
 
 class APILoggingMiddleware:
     def __init__(self, get_response):
@@ -23,7 +23,7 @@ class APILoggingMiddleware:
         # Log errors for specific status codes
         if response.status_code in {400, 404, 500}:
             error_details = {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": self._get_ist_time(),
                 "error_type": response.status_code,
                 "device": request.headers.get('User-Agent', 'Unknown'),
                 "ip": self._get_client_ip(request),
@@ -44,3 +44,9 @@ class APILoggingMiddleware:
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0].strip()
         return request.META.get('REMOTE_ADDR', 'Unknown')
+
+    @staticmethod
+    def _get_ist_time():
+        """Get the current time in IST."""
+        ist = pytz.timezone('Asia/Kolkata')
+        return datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
