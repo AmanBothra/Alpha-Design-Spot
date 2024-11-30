@@ -15,8 +15,7 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'first_name', 'last_name', 'email', 'user_type', 'whatsapp_number', 'address', 'pincode',
-            'city', 'dob', 'no_of_post', 'password',
-            "is_verify", "created", "modified"
+            'city', 'dob', 'no_of_post', 'password', "is_verify", "created", "modified", "is_deleted"
         )
         extra_kwargs = {
             'password': {'write_only': True},

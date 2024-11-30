@@ -55,77 +55,99 @@ class LoginView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(request, username=email, password=password)
-        if user is None:
-            raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
+        try:
+            # First check if user exists and is soft deleted
+            user_exists = User.objects.filter(email=email).first()
+            if user_exists and user_exists.is_deleted:
+                return Response({
+                    'status': False,
+                    'message': 'This account has been deleted. Please contact support for assistance.',
+                    'deleted_at': user_exists.deleted_at
+                }, status=status.HTTP_403_FORBIDDEN)
 
-        refresh = RefreshToken.for_user(user)
-        current_date = timezone.now().date()
+            # Proceed with normal authentication
+            user = authenticate(request, username=email, password=password)
+            if user is None:
+                return Response({
+                    'status': False,
+                    'message': 'Invalid email or password'
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Fetch user data with annotations and related frames
-        user_data = (
-            User.objects.filter(id=user.id)
-            .annotate(
-                is_customer=Case(
-                    When(no_of_post__lte=1, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                ),
-                is_expired=Case(
-                    When(
-                        Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
-                        then=Value(True)
+            current_date = timezone.now().date()
+
+            # Fetch user data with annotations and related frames
+            user_data = (
+                User.objects.filter(id=user.id)
+                .annotate(
+                    is_customer=Case(
+                        When(no_of_post__lte=1, then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField()
                     ),
-                    default=Value(False),
-                    output_field=BooleanField()
-                ),
-            )
-            .prefetch_related(
-                Prefetch(
-                    'customer_frame',
-                    queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
-                    to_attr='frames'
+                    is_expired=Case(
+                        When(
+                            Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
+                            then=Value(True)
+                        ),
+                        default=Value(False),
+                        output_field=BooleanField()
+                    ),
                 )
+                .prefetch_related(
+                    Prefetch(
+                        'customer_frame',
+                        queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
+                        to_attr='frames'
+                    )
+                )
+                .first()
             )
-            .first()
-        )
 
-        # Calculate days left in subscription
-        subscription = user.subscription_users.first()
-        days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
+            # Calculate days left in subscription
+            subscription = user.subscription_users.first()
+            days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
 
-        # Organize frames by profession type with full thumbnail URLs
-        profession_types = {}
-        for frame in user_data.frames:
-            category = frame.business_category
-            if category:
-                profession_type = frame.profession_type
-                thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
-                category_data = {
-                    "id": category.id,
-                    "business_sub_category_name": category.name,
-                    "file": thumbnail_url
-                }
-                if profession_type not in profession_types:
-                    profession_types[profession_type] = {"name": profession_type, "categories": []}
-                profession_types[profession_type]["categories"].append(category_data)
+            # Organize frames by profession type with full thumbnail URLs
+            profession_types = {}
+            for frame in user_data.frames:
+                category = frame.business_category
+                if category:
+                    profession_type = frame.profession_type
+                    thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
+                    category_data = {
+                        "id": category.id,
+                        "business_sub_category_name": category.name,
+                        "file": thumbnail_url
+                    }
+                    if profession_type not in profession_types:
+                        profession_types[profession_type] = {"name": profession_type, "categories": []}
+                    profession_types[profession_type]["categories"].append(category_data)
 
-        # Convert profession_types dictionary to a list for response
-        profession_types_list = list(profession_types.values())
+            # Convert profession_types dictionary to a list for response
+            profession_types_list = list(profession_types.values())
 
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'id': user.id,
-            'is_verify': user.is_verify,
-            'mobile_number': user.whatsapp_number,
-            'is_customer': user_data.is_customer,
-            'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
-            'is_expired': user_data.is_expired,
-            'days_left': days_left,
-            'profession_types': profession_types_list  # List with profession type and associated categories
-        })
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
 
+            return Response({
+                'status': True,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'id': user.id,
+                'is_verify': user.is_verify,
+                'mobile_number': user.whatsapp_number,
+                'is_customer': user_data.is_customer,
+                'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
+                'is_expired': user_data.is_expired,
+                'days_left': days_left,
+                'profession_types': profession_types_list
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'status': False,
+                'message': 'An error occurred during login. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
        
 class LogoutAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -167,7 +189,9 @@ class CustomerFrameViewSet(viewsets.ModelViewSet):
 class UserProfileListApiView(BaseModelViewSet):
     serializer_class = UserProfileListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify']
+    search_fields = [
+        'first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify', 'is_deleted'
+        ]
 
     def get_queryset(self):
         data = self.request.query_params.get('data', None)
@@ -186,8 +210,18 @@ class UserProfileListApiView(BaseModelViewSet):
             queryset = queryset.filter(user_type="customer", is_verify=True)
         elif data == "inactive":
             queryset = queryset.filter(user_type="customer", is_verify=False)
+        elif data == "delete":
+            queryset = queryset.filter(user_type="customer", is_deleted=True)
 
         return queryset
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.soft_delete()
+        return Response({
+            "status": True,
+            "message": "User successfully deleted"
+        }, status=status.HTTP_200_OK)
 
 
 class CheckEmailExistence(APIView):
