@@ -57,11 +57,9 @@ class LoginView(APIView):
         
         user_exists = User.objects.filter(email=email).first()
         if user_exists and user_exists.is_deleted:
-            return Response({
-                'status': False,
-                'message': 'This account has been deleted. Please contact support for assistance.',
-                'deleted_at': user_exists.deleted_at
-            }, status=status.HTTP_403_FORBIDDEN)
+            raise exceptions.ValidationError(
+                {'email': 'This account has been deleted. Please contact support for assistance.'}
+            )
 
         user = authenticate(request, username=email, password=password)
         if user is None:
