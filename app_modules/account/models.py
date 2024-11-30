@@ -99,7 +99,7 @@ class CustomerFrame(BaseModel):
         on_delete=models.SET_NULL,
         related_name="business_category_frames"
     )
-    frame_img = models.FileField(
+    frame_img = models.ImageField(
         upload_to=rename_file_name('customer_frame/'),
         blank=True, null=True
     )
