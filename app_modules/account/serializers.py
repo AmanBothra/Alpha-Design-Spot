@@ -20,6 +20,11 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
         }
+        
+    def validate_whatsapp_number(self, value):
+        if User.objects.filter(whatsapp_number=value).exists():
+            raise ValueError(" Mobile number already registered.")
+        
 
     def create(self, validated_data):
         validated_data['user_type'] = 'customer'

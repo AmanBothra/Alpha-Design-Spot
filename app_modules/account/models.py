@@ -15,7 +15,7 @@ class User(AbstractUser, BaseModel):
     username = models.CharField(max_length=150, null=True, blank=True)
     email = models.EmailField(unique=True)
     user_type = models.CharField(max_length=100, choices=USER_TYPE)
-    whatsapp_number = models.CharField(max_length=20, blank=True, unique=True)
+    whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(null=True, blank=True)
     pincode = models.IntegerField(null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
