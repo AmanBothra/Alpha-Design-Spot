@@ -11,6 +11,7 @@ from django.db.models import F
 
 
 class CustomerRegistrationSerializer(serializers.ModelSerializer):
+    whatsapp_number = serializers.CharField(allow_null=True, required=False)
     class Meta:
         model = User
         fields = (
@@ -22,9 +23,12 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
         }
         
     def validate_whatsapp_number(self, value):
+        if value is None:
+            return value
+            
         if User.objects.filter(whatsapp_number=value).exists():
-            raise ValueError(" Mobile number already registered.")
-        
+            raise ValueError("Mobile number already registered.")
+        return value
 
     def create(self, validated_data):
         validated_data['user_type'] = 'customer'
