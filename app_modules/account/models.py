@@ -122,6 +122,21 @@ class CustomerFrame(BaseModel):
     def is_a_group(self):
         # Check if the group name starts with 'A'
         return self.group.name.startswith('A') if self.group else False
+    
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['profession_type']),
+            models.Index(fields=['display_name']),
+            models.Index(fields=['customer', 'business_category', 'profession_type']),
+            models.Index(fields=['customer', 'display_name']),
+            models.Index(fields=['group', 'customer']),
+        ]
+        # Composite index for frequently filtered fields
+        index_together = [
+            ('group', 'profession_type'),
+            ('customer', 'group', 'business_category')
+        ]
 
 
 class PaymentMethod(models.Model):

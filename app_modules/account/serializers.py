@@ -60,9 +60,9 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 
 
 class CustomerFrameSerializer(serializers.ModelSerializer):
-    group_name = serializers.SerializerMethodField()
-    mobile_number = serializers.SerializerMethodField()
-    business_category_name = serializers.SerializerMethodField()
+    group_name = serializers.CharField(source='group.name', read_only=True)
+    mobile_number = serializers.CharField(source='customer.whatsapp_number', read_only=True)
+    business_category_name = serializers.CharField(source='business_category.name', read_only=True)
 
     class Meta:
         model = CustomerFrame
@@ -71,42 +71,52 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
             'profession_type', 'business_category_name', 'updated_on'
         )
 
-    def create(self, validated_data):
-        customer = validated_data.get('customer')
-        business_category = validated_data.get('business_category', None)
-        display_name = validated_data.get('display_name')
-        profession_type = validated_data.get('profession_type')
-        no_of_post = customer.no_of_post
+    def validate(self, data):
+        """Move validations from create to validate method"""
+        customer = data.get('customer')
+        business_category = data.get('business_category')
+        display_name = data.get('display_name')
+        profession_type = data.get('profession_type')
+        
+        # Get instance for update case
+        instance = getattr(self, 'instance', None)
 
+        # Display name validation
         if display_name:
-            existing_frame_with_display_name = CustomerFrame.objects.filter(
+            display_name_query = CustomerFrame.objects.filter(
                 customer=customer,
                 display_name=display_name
-            ).first()
-            if existing_frame_with_display_name:
-                raise serializers.ValidationError(
-                    {"display_name": f"This display name is already assigned to another customer frame."}
-                )
+            )
+            if instance:
+                display_name_query = display_name_query.exclude(id=instance.id)
+            if display_name_query.exists():
+                raise serializers.ValidationError({
+                    "display_name": "This display name is already assigned."
+                })
 
-        existing_frame_count = CustomerFrame.objects.filter(customer=customer).count()
-        if existing_frame_count >= no_of_post:
-            raise serializers.ValidationError(
-                {"customer": f"The customer has already reached the maximum number of posts {no_of_post}."})
+        # Post limit validation - only for creation
+        if not instance:  # Only check on create
+            if CustomerFrame.objects.filter(customer=customer).count() >= customer.no_of_post:
+                raise serializers.ValidationError({
+                    "customer": f"Maximum posts limit ({customer.no_of_post}) reached."
+                })
 
+        # Business category and profession type validation
         if display_name and profession_type:
-            existing_frame = CustomerFrame.objects.filter(
+            category_query = CustomerFrame.objects.filter(
                 customer=customer,
                 business_category=business_category,
                 profession_type=profession_type
-            ).first()
+            )
+            if instance:
+                category_query = category_query.exclude(id=instance.id)
+            if category_query.exists():
+                raise serializers.ValidationError({
+                    "customer": f"This {business_category.name} and {profession_type} already assigned."
+                })
 
-            if existing_frame:
-                raise serializers.ValidationError(
-                    {
-                        "customer": f"This {business_category.name} and {profession_type} already assigned to the customer."}
-                )
+        return data
 
-        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         current_date = date.today()
@@ -152,15 +162,6 @@ class CustomerFrameSerializer(serializers.ModelSerializer):
                     
             
         return instance
-
-    def get_group_name(self, obj):
-        return getattr(obj.group, 'name', None)
-
-    def get_business_category_name(self, obj):
-        return getattr(obj.business_category, 'name', None)
-
-    def get_mobile_number(self, obj):
-        return obj.customer.whatsapp_number
 
 
 class CustomerGroupSerializer(serializers.ModelSerializer):
