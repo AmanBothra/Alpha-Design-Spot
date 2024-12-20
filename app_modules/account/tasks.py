@@ -6,39 +6,52 @@ import datetime
 # @shared_task
 def mapping_customer_frame_with_post(customer_frame_id):
     try:
-        instance = CustomerFrame.objects.get(id=customer_frame_id)
+        # Use select_related to reduce queries
+        instance = CustomerFrame.objects.select_related(
+            'group', 'customer'
+        ).get(id=customer_frame_id)
     except CustomerFrame.DoesNotExist:
         return f"CustomerFrame with id {customer_frame_id} does not exist."
 
+    # Use values() to optimize memory
     current_date = datetime.date.today()
-    future_events = Event.objects.filter(event_date__gte=current_date)
+    future_events = Event.objects.filter(event_date__gte=current_date).values_list('id', flat=True)
 
-    existing_posts = Post.objects.select_related('event', 'group').filter(
+    # Optimize query with values()
+    existing_posts = Post.objects.filter(
         group=instance.group, event__in=future_events
-    )
+    ).values('id', 'group_id')
 
-    batch_size = 100
+    # Use bulk operations with larger batch size
+    batch_size = 500
+    mappings_to_create = []
+
     for i in range(0, len(existing_posts), batch_size):
         batch_posts = existing_posts[i:i + batch_size]
-        mappings_to_create = []
-
+        
         with transaction.atomic():
-            for post in batch_posts:
-                mapping, created = CustomerPostFrameMapping.objects.get_or_create(
-                    customer_frame=instance,
-                    post=post,
-                    defaults={
-                        'customer': instance.customer,
-                        'is_downloaded': False
-                    }
-                )
+            # Bulk get existing mappings
+            existing_mappings = set(CustomerPostFrameMapping.objects.filter(
+                customer_frame=instance,
+                post_id__in=[p['id'] for p in batch_posts]
+            ).values_list('post_id', flat=True))
 
-                if not created and mapping.is_downloaded:
-                    mapping.is_downloaded = False
-                    mapping.save()
+            for post in batch_posts:
+                if post['id'] not in existing_mappings:
+                    mappings_to_create.append(
+                        CustomerPostFrameMapping(
+                            customer_frame=instance,
+                            post_id=post['id'],
+                            customer=instance.customer,
+                            is_downloaded=False
+                        )
+                    )
 
             if mappings_to_create:
-                CustomerPostFrameMapping.objects.bulk_create(mappings_to_create)
+                CustomerPostFrameMapping.objects.bulk_create(
+                    mappings_to_create,
+                    batch_size=batch_size
+                )
 
     return f"Mapping completed for CustomerFrame with id {customer_frame_id}"
 
@@ -46,39 +59,63 @@ def mapping_customer_frame_with_post(customer_frame_id):
 # @shared_task
 def mapping_customer_frame_with_other_posts(customer_frame_id):
     try:
-        instance = CustomerFrame.objects.get(id=customer_frame_id)
+        # Use select_related to reduce queries
+        instance = CustomerFrame.objects.select_related(
+            'customer', 'group'
+        ).get(id=customer_frame_id)
     except CustomerFrame.DoesNotExist:
         return f"CustomerFrame with id {customer_frame_id} does not exist."
 
-    existing_other_posts = OtherPost.objects.select_related('category', 'group').filter(
+    # Get only necessary fields using values()
+    existing_other_posts = OtherPost.objects.filter(
         group=instance.group
+    ).values_list('id', flat=True)
+
+    # Increased batch size for better performance
+    batch_size = 500
+    mappings_to_create = []
+
+    # Get existing mappings in one query
+    existing_mappings = set(
+        CustomerOtherPostFrameMapping.objects.filter(
+            customer_frame=instance,
+            other_post_id__in=existing_other_posts
+        ).values_list('other_post_id', flat=True)
     )
 
-    batch_size = 100
+    # Process in batches
     for i in range(0, len(existing_other_posts), batch_size):
         batch_other_posts = existing_other_posts[i:i + batch_size]
-        mappings_to_create = []
-
+        
         with transaction.atomic():
-            for other_post in batch_other_posts:
-                # Try to retrieve an existing mapping for this post and customer frame
-                mapping, created = CustomerOtherPostFrameMapping.objects.get_or_create(
-                    customer_frame=instance,
-                    other_post=other_post,
-                    defaults={
-                        'customer': instance.customer,
-                        'is_downloaded': False
-                    }
+            # Create new mappings for posts that don't have mappings
+            for post_id in batch_other_posts:
+                if post_id not in existing_mappings:
+                    mappings_to_create.append(
+                        CustomerOtherPostFrameMapping(
+                            customer_frame=instance,
+                            other_post_id=post_id,
+                            customer=instance.customer,
+                            is_downloaded=False
+                        )
+                    )
+
+            # Bulk create new mappings
+            if mappings_to_create:
+                CustomerOtherPostFrameMapping.objects.bulk_create(
+                    mappings_to_create, 
+                    batch_size=batch_size,
+                    ignore_conflicts=True
                 )
 
-                if not created:
-                    # Update existing mapping
-                    if mapping.is_downloaded:
-                        mapping.is_downloaded = False
-                        mapping.save()
+            # Bulk update existing mappings that are downloaded
+            CustomerOtherPostFrameMapping.objects.filter(
+                customer_frame=instance,
+                other_post_id__in=batch_other_posts,
+                is_downloaded=True
+            ).update(is_downloaded=False)
 
     return f"Mapping completed for CustomerFrame with id {customer_frame_id}"
-
 
 # @shared_task
 def map_customer_frame_with_business_posts(customer_frame_id):
