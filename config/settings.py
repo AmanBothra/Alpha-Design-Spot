@@ -38,25 +38,25 @@ AUTH_USER_MODEL = 'account.User'
 
 # ------------------------------- CACHE Configuration ------------------------------
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            "SOCKET_TIMEOUT": 5,
-            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-            "MAX_CONNECTIONS": 1000,
-            "RETRY_ON_TIMEOUT": True,
-            "POOL_BLOCK": True,  # Block when pool is full
-        }
-    }
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379/1",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#             "SOCKET_CONNECT_TIMEOUT": 5,
+#             "SOCKET_TIMEOUT": 5,
+#             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+#             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+#             "MAX_CONNECTIONS": 1000,
+#             "RETRY_ON_TIMEOUT": True,
+#             "POOL_BLOCK": True,  # Block when pool is full
+#         }
+#     }
+# }
 
-# Increased cache timeout for better performance
-CACHE_TTL = 60 * 30  # 30 minutes
+# # Increased cache timeout for better performance
+# CACHE_TTL = 60 * 30  # 30 minutes
 
 # ------------------------------- APPS and MIDDLEWARE ------------------------------
 DJANGO_APPS = [
