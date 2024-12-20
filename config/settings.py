@@ -14,19 +14,6 @@ SECRET_KEY = 'django-insecure-n2@ca6*6y)uu%a$_afsnr382fz)ir0m8#$63u8343+_1f$uxvv
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-API_REQUEST_TIMEOUT = 60  # seconds
-
-# Security settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-CSRF_COOKIE_SECURE = True  # Only if using HTTPS
-SESSION_COOKIE_SECURE = True  # Only if using HTTPS
-
-# Session optimization
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
-
 # ----------------------- Global Variables Need To be Set in .env ---------------------
 DEBUG = env.bool('DEBUG', default=True)
 DOMAIN = env.str("DOMAIN")
@@ -36,27 +23,12 @@ ALLOWED_HOSTS = ['127.0.0.1', 'api.alphawala.xyz', DOMAIN_IP, 'localhost']
 
 AUTH_USER_MODEL = 'account.User'
 
-# ------------------------------- CACHE Configuration ------------------------------
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://127.0.0.1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#             "SOCKET_CONNECT_TIMEOUT": 5,
-#             "SOCKET_TIMEOUT": 5,
-#             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-#             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-#             "MAX_CONNECTIONS": 1000,
-#             "RETRY_ON_TIMEOUT": True,
-#             "POOL_BLOCK": True,  # Block when pool is full
-#         }
-#     }
-# }
-
-# # Increased cache timeout for better performance
-# CACHE_TTL = 60 * 30  # 30 minutes
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env('REDIS_HOST_URL'),
+    }
+}
 
 # ------------------------------- APPS and MIDDLEWARE ------------------------------
 DJANGO_APPS = [
@@ -92,11 +64,9 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
-    # "silk.middleware.SilkyMiddleware",
+    "silk.middleware.SilkyMiddleware",
     "config.middleware.APILoggingMiddleware",
     'django.middleware.security.SecurityMiddleware',
-    'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -104,9 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-    'django.middleware.cache.FetchFromCacheMiddleware',
-    'config.middleware.CustomSilkyMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",    
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -133,36 +101,16 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "dj_db_conn_pool.backends.postgresql",
-        "NAME": env("POSTGRES_DB"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "ads",
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("DB_HOST"),
         "PORT": 5432,
         "TIME_ZONE": "Asia/Kolkata",
-        
-        # Connection Pool Settings
-        "POOL_OPTIONS": {
-            'POOL_SIZE': 200,          # Base pool size
-            'MAX_OVERFLOW': 100,       # Additional connections when needed
-            'RECYCLE': 3600,          # Recycle connections every hour
-            'TIMEOUT': 20,            # Connection timeout in seconds
-        },
-        
-        # PostgreSQL Specific Options
-        "OPTIONS": {
-            "connect_timeout": 10,
-            "keepalives": 1,
-            "keepalives_idle": 60,
-            "keepalives_interval": 10,
-            "keepalives_count": 5,
-            # Setting statement timeout through options string
-            "options": '-c statement_timeout=15000'  # 15 seconds in milliseconds
-        },
     }
 }
 
-DJANGO_DB_POOL_ENABLE = True
 # ------------------------------- Password validation -------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -221,8 +169,8 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=365),
-    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=730),
-    "ROTATE_REFRESH_TOKENS": True,
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=365),
+    "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -232,17 +180,11 @@ SIMPLE_JWT = {
 # ---------------------------- Celery Configuration ------------------------
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_POOL_LIMIT = 100
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata'
-CELERY_TASK_ACKS_LATE = True
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1
-CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
-CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
 
 
 CORS_ORIGIN_ALLOW_ALL = False
@@ -340,19 +282,13 @@ SWAGGER_SETTINGS = {
 
 # settings.py
 
-# Create logs directory if it doesn't exist
-LOGS_DIR = os.path.join(BASE_DIR, 'logs')
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR)
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '[{asctime}] {levelname} {name} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'simple': {
             'format': '{levelname} {message}',
@@ -360,35 +296,28 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
-            'level': 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_DIR, 'api_requests.log'),
+            'filename': 'api_requests.log',
             'formatter': 'verbose',
-            'encoding': 'utf-8',
         },
         'error_file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_DIR, 'api_errors.log'),
+            'filename': 'api_errors.log',
             'formatter': 'verbose',
-            'encoding': 'utf-8',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
-            'propagate': False,
+            'propagate': True,
         },
         'django.request': {
-            'handlers': ['error_file'],
-            'level': 'ERROR',
+            'handlers': ['file', 'error_file'],
+            'level': 'INFO',
             'propagate': False,
         },
         'api_errors': {
@@ -396,32 +325,16 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-    }
+    },
 }
 
-# Silk Configuration
+# 4. Configure Silk Settings in settings.py
 SILKY_PYTHON_PROFILER = True
 SILKY_PYTHON_PROFILER_BINARY = True
 SILKY_ANALYZE_QUERIES = True
-SILKY_MAX_REQUEST_BODY_SIZE = 1024  # 1kb
-SILKY_MAX_RESPONSE_BODY_SIZE = 1024  # 1kb
-SILKY_INTERCEPT_PERCENT = 100
-SILKY_MAX_RECORDED_REQUESTS = 10000
-SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
-
-# Clean up old data automatically
-SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
-SILKY_CLEANUP_FREQUENCY = 60 * 60  # Cleanup every hour
-
-SILKY_RECORD_RESPONSE_BODY = False
-
-# Ignore certain paths
-SILKY_IGNORE_PATHS = [
-    '/static/',
-    '/media/',
-    '/admin/jsi18n/',
-    '/__debug__/',
-]
-
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+# SILKY_AUTHENTICATION = True  # Requires users to login
+# SILKY_AUTHORISATION = True  # Permission based
+# SILKY_META = True  # Silk records SQL queries
+# SILKY_INTERCEPT_PERCENT = 100  # Percentage of requests to intercept
+# SILKY_MAX_RECORDED_REQUESTS = 1000  # Number of requests to keep
+# SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
