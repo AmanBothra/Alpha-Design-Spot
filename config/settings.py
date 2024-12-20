@@ -340,6 +340,11 @@ SWAGGER_SETTINGS = {
 
 # settings.py
 
+# Create logs directory if it doesn't exist
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -348,39 +353,49 @@ LOGGING = {
             'format': '[{asctime}] {levelname} {name} {message}',
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S'
-        }
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
-        'request_file': {
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': 'logs/api_requests.log',
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 30,
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGS_DIR, 'api_requests.log'),
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
         'error_file': {
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': 'logs/api_errors.log',
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 30,
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGS_DIR, 'api_errors.log'),
             'formatter': 'verbose',
             'encoding': 'utf-8',
-        }
+        },
     },
     'loggers': {
-        'api.requests': {
-            'handlers': ['request_file'],
+        'django': {
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
         },
-        'api.errors': {
+        'django.request': {
             'handlers': ['error_file'],
             'level': 'ERROR',
             'propagate': False,
-        }
+        },
+        'api_errors': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
     }
 }
 
