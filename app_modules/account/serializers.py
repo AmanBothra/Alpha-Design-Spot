@@ -27,7 +27,7 @@ class CustomerRegistrationSerializer(serializers.ModelSerializer):
             return value
             
         if User.objects.filter(whatsapp_number=value).exists():
-            raise ValueError("Mobile number already registered.")
+            raise ValidationError({"mobile_number": "Mobile number already registered."})
         return value
 
     def create(self, validated_data):
