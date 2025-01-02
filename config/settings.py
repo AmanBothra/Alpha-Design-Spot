@@ -50,7 +50,7 @@ THIRD_PARTY_APPS = [
     'debug_toolbar',
     "django_celery_results",
     "django_celery_beat",
-    "silk",
+    # "silk",
 ]
 
 LOCAL_APPS = [
@@ -64,7 +64,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
-    "silk.middleware.SilkyMiddleware",
+    # "silk.middleware.SilkyMiddleware",
     "config.middleware.APILoggingMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -74,7 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",    
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'django.middleware.transaction.TransactionMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -99,17 +100,43 @@ TEMPLATES = [
 
 # -------------------------- Database Configuration --------------------------
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "ads",
+#         "USER": env("POSTGRES_USER"),
+#         "PASSWORD": env("POSTGRES_PASSWORD"),
+#         "HOST": env("DB_HOST"),
+#         "PORT": 5432,
+#         "TIME_ZONE": "Asia/Kolkata",
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",  # Connection pooling enabled
         "NAME": "ads",
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("DB_HOST"),
         "PORT": 5432,
         "TIME_ZONE": "Asia/Kolkata",
+        "OPTIONS": {
+            "MAX_CONNS": 40,  # Maximum pooled connections
+            "MIN_CONNS": 10,   # Minimum pooled connections
+            "connect_timeout": 10,
+            "client_encoding": "UTF8",
+            "statement_timeout": 30000,  # 30 seconds query timeout
+            "idle_in_transaction_session_timeout": 60000,  # 1-minute idle timeout
+        },
+        "ATOMIC_REQUESTS": True,  # Enable automatic transaction management
+        "CONN_MAX_AGE": 600,      # Persistent connection age
     }
 }
+
+# Additional retry settings (if implementing retries)
+DATABASE_CONNECTION_RETRY_ATTEMPTS = 3
+DATABASE_CONNECTION_RETRY_DELAY = 1  # Retry delay in seconds
 
 # ------------------------------- Password validation -------------------------
 AUTH_PASSWORD_VALIDATORS = [
