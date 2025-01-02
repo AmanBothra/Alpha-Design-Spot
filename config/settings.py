@@ -50,7 +50,6 @@ THIRD_PARTY_APPS = [
     'debug_toolbar',
     "django_celery_results",
     "django_celery_beat",
-    # "silk",
 ]
 
 LOCAL_APPS = [
@@ -75,7 +74,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
-    'django.middleware.transaction.TransactionMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -114,7 +112,7 @@ TEMPLATES = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",  # Connection pooling enabled
+        "ENGINE": "dj_db_conn_pool.backends.postgresql",  # Enables connection pooling
         "NAME": "ads",
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
@@ -122,21 +120,22 @@ DATABASES = {
         "PORT": 5432,
         "TIME_ZONE": "Asia/Kolkata",
         "OPTIONS": {
-            "MAX_CONNS": 40,  # Maximum pooled connections
-            "MIN_CONNS": 10,   # Minimum pooled connections
-            "connect_timeout": 10,
-            "client_encoding": "UTF8",
-            "statement_timeout": 30000,  # 30 seconds query timeout
-            "idle_in_transaction_session_timeout": 60000,  # 1-minute idle timeout
+            'options': '-c statement_timeout=30000',  # Sets statement timeout to 30 seconds
+            'client_encoding': 'UTF8',
         },
-        "ATOMIC_REQUESTS": True,  # Enable automatic transaction management
-        "CONN_MAX_AGE": 600,      # Persistent connection age
+        "CONN_MAX_AGE": 0,  # Disables Django's built-in persistent connections
+        'POOL_OPTIONS': {
+            'POOL_SIZE': 10,        # Number of persistent connections in the pool
+            'MAX_OVERFLOW': 5,      # Additional connections beyond the pool size
+            'RECYCLE': 3600,        # Recycles connections after 3600 seconds (1 hour)
+            'POOL_TIMEOUT': 30,     # Wait time for a connection before raising an error
+        }
     }
 }
 
-# Additional retry settings (if implementing retries)
+# Retry settings
 DATABASE_CONNECTION_RETRY_ATTEMPTS = 3
-DATABASE_CONNECTION_RETRY_DELAY = 1  # Retry delay in seconds
+DATABASE_CONNECTION_RETRY_DELAY = 1  # Delay in seconds between retries
 
 # ------------------------------- Password validation -------------------------
 AUTH_PASSWORD_VALIDATORS = [
