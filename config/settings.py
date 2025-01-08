@@ -123,7 +123,7 @@ DATABASES = {
             'options': '-c statement_timeout=30000',  # Sets statement timeout to 30 seconds
             'client_encoding': 'UTF8',
         },
-        "CONN_MAX_AGE": 0,  # Disables Django's built-in persistent connections
+        "CONN_MAX_AGE": 0,
         'POOL_OPTIONS': {
             'POOL_SIZE': 10,        # Number of persistent connections in the pool
             'MAX_OVERFLOW': 5,      # Additional connections beyond the pool size
@@ -353,14 +353,3 @@ LOGGING = {
         },
     },
 }
-
-# 4. Configure Silk Settings in settings.py
-SILKY_PYTHON_PROFILER = True
-SILKY_PYTHON_PROFILER_BINARY = True
-SILKY_ANALYZE_QUERIES = True
-# SILKY_AUTHENTICATION = True  # Requires users to login
-# SILKY_AUTHORISATION = True  # Permission based
-# SILKY_META = True  # Silk records SQL queries
-# SILKY_INTERCEPT_PERCENT = 100  # Percentage of requests to intercept
-# SILKY_MAX_RECORDED_REQUESTS = 1000  # Number of requests to keep
-# SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
