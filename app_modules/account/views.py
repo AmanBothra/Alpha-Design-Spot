@@ -199,13 +199,13 @@ class UserProfileListApiView(BaseModelViewSet):
 
         return queryset
     
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.soft_delete()
-        return Response({
-            "status": True,
-            "message": "User successfully deleted"
-        }, status=status.HTTP_200_OK)
+    # def destroy(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     instance.soft_delete()
+    #     return Response({
+    #         "status": True,
+    #         "message": "User successfully deleted"
+    #     }, status=status.HTTP_200_OK)
 
 
 class CheckEmailExistence(APIView):
