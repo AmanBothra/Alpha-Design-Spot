@@ -15,7 +15,7 @@ class User(AbstractUser, BaseModel):
     username = models.CharField(max_length=150, null=True, blank=True)
     email = models.EmailField(unique=True)
     user_type = models.CharField(max_length=100, choices=USER_TYPE)
-    whatsapp_number = models.CharField(max_length=20, blank=True, null=True)
+    whatsapp_number = models.CharField(max_length=20, blank=True, null=True, db_index=True)
     address = models.TextField(null=True, blank=True)
     pincode = models.IntegerField(null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
@@ -29,6 +29,16 @@ class User(AbstractUser, BaseModel):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user_type', 'is_deleted']),
+            models.Index(fields=['email', 'is_deleted']),
+            models.Index(fields=['is_verify', 'user_type']),
+            models.Index(fields=['whatsapp_number']),
+            models.Index(fields=['no_of_post', 'user_type']),
+            models.Index(fields=['created', 'user_type']),
+        ]
     
     def soft_delete(self):
         self.is_deleted = True
@@ -110,6 +120,15 @@ class CustomerFrame(BaseModel):
         null=True, blank=True
     )
     display_name = models.CharField(max_length=20, null=True, blank=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer', 'group']),
+            models.Index(fields=['customer', 'profession_type']),
+            models.Index(fields=['customer', 'business_category']),
+            models.Index(fields=['group', 'profession_type']),
+            models.Index(fields=['display_name']),
+        ]
 
     def __str__(self) -> str:
         return f"{self.customer.whatsapp_number} and {self.group}"
@@ -169,6 +188,15 @@ class Subscription(BaseModel):
     transaction_number = models.CharField(max_length=50, null=True, blank=True)
     file = models.FileField(upload_to=rename_file_name('subscription/'), null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'end_date']),
+            models.Index(fields=['end_date', 'is_active']),
+            models.Index(fields=['user', 'frame']),
+            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=['order_number']),
+        ]
 
     def __str__(self) -> str:
         return f"{self.order_number} {self.plan.name}"

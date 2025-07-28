@@ -125,10 +125,11 @@ DATABASES = {
         },
         "CONN_MAX_AGE": 0,
         'POOL_OPTIONS': {
-            'POOL_SIZE': 10,        # Number of persistent connections in the pool
-            'MAX_OVERFLOW': 5,      # Additional connections beyond the pool size
-            'RECYCLE': 3600,        # Recycles connections after 3600 seconds (1 hour)
-            'POOL_TIMEOUT': 30,     # Wait time for a connection before raising an error
+            'POOL_SIZE': 20,        # Increased from 10 for 7000 users
+            'MAX_OVERFLOW': 10,     # Increased from 5 for peak load handling
+            'RECYCLE': 1800,        # Reduced from 3600 to 30 minutes for fresher connections
+            'POOL_TIMEOUT': 10,     # Reduced from 30 for faster error detection
+            'POOL_PRE_PING': True,  # Enable connection health checks
         }
     }
 }

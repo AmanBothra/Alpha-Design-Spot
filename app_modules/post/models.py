@@ -13,6 +13,13 @@ class Category(BaseModel):
     banner_image = models.ImageField(upload_to='category_banners/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['sub_category']),
+            models.Index(fields=['is_active', 'is_featured']),
+            models.Index(fields=['name']),
+        ]
 
     def __str__(self) -> CharField:
         return self.name
@@ -28,6 +35,13 @@ class Event(BaseModel):
     event_date = models.DateField(null=True, blank=True)
     event_type = models.CharField(max_length=50, choices=FILE_TYPE, default='image')
     thumbnail = models.FileField(upload_to=rename_file_name('event_thumbnail/'), null=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['event_date', 'event_type']),
+            models.Index(fields=['event_date']),
+            models.Index(fields=['name']),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -48,6 +62,13 @@ class Post(BaseModel):
         related_name="customer_post_group",
         null=True, blank=True
     )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['event', 'group']),
+            models.Index(fields=['file_type']),
+            models.Index(fields=['group']),
+        ]
 
     def __str__(self) -> str:
         return f"Post {self.id}"
@@ -69,6 +90,13 @@ class OtherPost(BaseModel):
         related_name="customer_other_post_group",
         null=True, blank=True
     )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['category', 'file_type']),
+            models.Index(fields=['group', 'file_type']),
+            models.Index(fields=['category']),
+        ]
 
     def __str__(self) -> str:
         return self.category.name
@@ -83,6 +111,12 @@ class BusinessCategory(BaseModel):
     profession_type = models.CharField(max_length=20, choices=PROFESSION_TYPE)
     name = models.CharField(max_length=100, unique=True)
     thumbnail = models.FileField(upload_to=rename_file_name('business_category_thumbnail/'))
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['profession_type']),
+            models.Index(fields=['name']),
+        ]
     
     def __str__(self) -> str:
         return self.name
@@ -110,6 +144,14 @@ class BusinessPost(BaseModel):
         related_name="business_post_group",
         null=True, blank=True
     )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['profession_type', 'business_category']),
+            models.Index(fields=['group', 'file_type']),
+            models.Index(fields=['business_category']),
+            models.Index(fields=['file_type']),
+        ]
 
     def __str__(self) -> str:
         return f"Category is {self.business_category.name} and Profession is {self.profession_type}"
