@@ -216,14 +216,15 @@ class UserProfileListApiView(BaseModelViewSet):
             queryset = queryset.filter(
                 user_type="customer",
                 is_verify=False,
+                is_deleted=False,  # Exclude deleted users
                 created__date=today_date
             )
         elif data == "admin":
-            queryset = queryset.filter(user_type="admin")
+            queryset = queryset.filter(user_type="admin", is_deleted=False)  # Exclude deleted admins
         elif data == "active":
             queryset = queryset.filter(user_type="customer", is_verify=True, is_deleted=False)
         elif data == "inactive":
-            queryset = queryset.filter(user_type="customer", is_verify=False)
+            queryset = queryset.filter(user_type="customer", is_verify=False, is_deleted=False)  # Exclude deleted users
         elif data == "delete":
             queryset = queryset.filter(user_type="customer", is_deleted=True)
 
@@ -240,6 +241,7 @@ class UserProfileListApiView(BaseModelViewSet):
                 # Double-check if already deleted (race condition protection)
                 if instance.is_deleted:
                     return Response({
+                        "success": False,
                         "status": False,
                         "message": "User is already deleted"
                     }, status=status.HTTP_400_BAD_REQUEST)
@@ -261,22 +263,26 @@ class UserProfileListApiView(BaseModelViewSet):
                 
                 if updated_count == 0:
                     return Response({
+                        "success": False,
                         "status": False,
                         "message": "User deletion failed - user may have been deleted by another process"
                     }, status=status.HTTP_409_CONFLICT)
                 
                 return Response({
+                    "success": True,
                     "status": True,
                     "message": "User successfully deleted"
                 }, status=status.HTTP_200_OK)
                 
         except User.DoesNotExist:
             return Response({
+                "success": False,
                 "status": False,
                 "message": "User not found"
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
+                "success": False,
                 "status": False,
                 "message": f"Failed to delete user: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
