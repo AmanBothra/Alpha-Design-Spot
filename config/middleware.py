@@ -11,29 +11,51 @@ class APILoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Log request details
-        logger.info(f"Request: {request.method} {request.path} - Headers: {dict(request.headers)}")
+        import time
+        start_time = time.time()
+        
+        # Enhanced request logging for login endpoint
+        client_ip = self._get_client_ip(request)
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        
+        if request.path == '/api/auth/login':
+            logger.info(f"LOGIN_REQUEST: {request.method} {request.path} - IP: {client_ip} - Agent: {user_agent[:100]}")
 
         # Process the request to get the response
         response = self.get_response(request)
+        
+        # Calculate response time
+        response_time = (time.time() - start_time) * 1000
+        
+        # Enhanced response logging for login endpoint
+        if request.path == '/api/auth/login':
+            logger.info(f"LOGIN_RESPONSE: Status {response.status_code} - IP: {client_ip} - Time: {response_time:.2f}ms")
 
-        # Log response details
-        logger.info(f"Response: Status {response.status_code} - Path: {request.path}")
-
-        # Log errors for specific status codes
-        if response.status_code in {400, 404, 500}:
+        # Enhanced error logging for all requests
+        if response.status_code in {400, 404, 500, 408, 504}:  # Added timeout codes
             error_details = {
                 "timestamp": self._get_ist_time(),
                 "error_type": response.status_code,
-                "device": request.headers.get('User-Agent', 'Unknown'),
-                "ip": self._get_client_ip(request),
+                "device": user_agent,
+                "ip": client_ip,
                 "request_url": request.path,
                 "method": request.method,
                 "status_code": response.status_code,
-                "headers": dict(request.headers),
-                "error_message": response.reason_phrase or response.content.decode('utf-8', errors='ignore')[:100],  # Concise message
+                "response_time_ms": round(response_time, 2),
+                "headers": {
+                    "user_agent": user_agent,
+                    "content_type": request.headers.get('Content-Type', 'Unknown'),
+                    "accept": request.headers.get('Accept', 'Unknown'),
+                    "connection": request.headers.get('Connection', 'Unknown'),
+                },
+                "error_message": response.reason_phrase or response.content.decode('utf-8', errors='ignore')[:200],
             }
-            error_logger.error(json.dumps(error_details))
+            
+            # Special handling for login failures
+            if request.path == '/api/auth/login' and response.status_code == 400:
+                error_details["login_failure_type"] = "CLIENT_TIMEOUT_OR_NETWORK_ISSUE"
+                
+            error_logger.error(json.dumps(error_details, indent=2))
 
         return response
 

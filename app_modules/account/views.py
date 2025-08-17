@@ -52,85 +52,115 @@ class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        user_exists = User.objects.filter(email=email).first()
-        if user_exists and user_exists.is_deleted:
-            raise exceptions.ValidationError(
-                {'email': 'This account has been deleted. Please contact support for assistance.'}
-            )
+        try:
+            # Input validation
+            email = request.data.get('email')
+            password = request.data.get('password')
+            
+            if not email or not password:
+                return Response({
+                    'error': 'Email and password are required',
+                    'error_code': 'MISSING_CREDENTIALS'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check user existence and deletion status
+            user_exists = User.objects.filter(email=email).first()
+            if user_exists and user_exists.is_deleted:
+                return Response({
+                    'error': 'This account has been deleted. Please contact support for assistance.',
+                    'error_code': 'ACCOUNT_DELETED'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(request, username=email, password=password)
-        if user is None:
-            raise exceptions.ValidationError({'email': 'Invalid Email and Password'})
+            # Authenticate user
+            user = authenticate(request, username=email, password=password)
+            if user is None:
+                return Response({
+                    'error': 'Invalid Email and Password',
+                    'error_code': 'INVALID_CREDENTIALS'
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        refresh = RefreshToken.for_user(user)
-        current_date = timezone.now().date()
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+            current_date = timezone.now().date()
 
-        # Fetch user data with annotations and related frames
-        user_data = (
-            User.objects.filter(id=user.id)
-            .annotate(
-                is_customer=Case(
-                    When(no_of_post__lte=1, then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField()
-                ),
-                is_expired=Case(
-                    When(
-                        Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
-                        then=Value(True)
-                    ),
-                    default=Value(False),
-                    output_field=BooleanField()
-                ),
-            )
-            .prefetch_related(
-                Prefetch(
-                    'customer_frame',
-                    queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
-                    to_attr='frames'
+            # Optimized user data query with timeout protection
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SET statement_timeout = '15s'")  # 15 second timeout for this query
+                
+                user_data = (
+                    User.objects.filter(id=user.id)
+                    .annotate(
+                        is_customer=Case(
+                            When(no_of_post__lte=1, then=Value(True)),
+                            default=Value(False),
+                            output_field=BooleanField()
+                        ),
+                        is_expired=Case(
+                            When(
+                                Q(subscription_users__end_date__lt=current_date) | Q(subscription_users__isnull=True), 
+                                then=Value(True)
+                            ),
+                            default=Value(False),
+                            output_field=BooleanField()
+                        ),
+                    )
+                    .prefetch_related(
+                        Prefetch(
+                            'customer_frame',
+                            queryset=CustomerFrame.objects.select_related('business_category').order_by('business_category__id').distinct(),
+                            to_attr='frames'
+                        )
+                    )
+                    .first()
                 )
-            )
-            .first()
-        )
 
-        # Calculate days left in subscription
-        subscription = user.subscription_users.first()
-        days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
+            # Calculate subscription info
+            subscription = user.subscription_users.first()
+            days_left = (subscription.end_date - current_date).days if subscription and subscription.end_date >= current_date else 0
 
-        # Organize frames by profession type with full thumbnail URLs
-        profession_types = {}
-        for frame in user_data.frames:
-            category = frame.business_category
-            if category:
-                profession_type = frame.profession_type
-                thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
-                category_data = {
-                    "id": category.id,
-                    "business_sub_category_name": category.name,
-                    "file": thumbnail_url
-                }
-                if profession_type not in profession_types:
-                    profession_types[profession_type] = {"name": profession_type, "categories": []}
-                profession_types[profession_type]["categories"].append(category_data)
+            # Process profession types with error handling
+            profession_types = {}
+            try:
+                for frame in user_data.frames:
+                    category = frame.business_category
+                    if category:
+                        profession_type = frame.profession_type
+                        thumbnail_url = request.build_absolute_uri(category.thumbnail.url) if category.thumbnail else None
+                        category_data = {
+                            "id": category.id,
+                            "business_sub_category_name": category.name,
+                            "file": thumbnail_url
+                        }
+                        if profession_type not in profession_types:
+                            profession_types[profession_type] = {"name": profession_type, "categories": []}
+                        profession_types[profession_type]["categories"].append(category_data)
+            except Exception:
+                profession_types = {}  # Fallback to empty if processing fails
 
-        # Convert profession_types dictionary to a list for response
-        profession_types_list = list(profession_types.values())
+            profession_types_list = list(profession_types.values())
 
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'id': user.id,
-            'is_verify': user.is_verify,
-            'mobile_number': user.whatsapp_number,
-            'is_customer': user_data.is_customer,
-            'is_a_group': bool(user_data.frames and user_data.frames[0].is_a_group()),
-            'is_expired': user_data.is_expired,
-            'days_left': days_left,
-            'profession_types': profession_types_list  # List with profession type and associated categories
-        })
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'id': user.id,
+                'is_verify': user.is_verify,
+                'mobile_number': user.whatsapp_number,
+                'is_customer': user_data.is_customer,
+                'is_a_group': bool(user_data.frames and len(user_data.frames) > 0 and user_data.frames[0].is_a_group()),
+                'is_expired': user_data.is_expired,
+                'days_left': days_left,
+                'profession_types': profession_types_list,
+                'login_time': timezone.now().isoformat()  # For debugging
+            })
+
+        except Exception as e:
+            # Comprehensive error handling
+            return Response({
+                'error': 'Login service temporarily unavailable. Please try again.',
+                'error_code': 'SERVICE_ERROR',
+                'debug_info': str(e) if DEBUG else None
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
        
 class LogoutAPIView(APIView):

@@ -70,6 +70,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "config.middleware.APILoggingMiddleware",  # Enhanced logging for debugging
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -561,3 +562,29 @@ sentry_sdk.init(
     # Custom fingerprinting for better error grouping
     default_integrations=False,  # We explicitly define integrations above
 )
+
+# ---------------------------- Network & Timeout Configuration ------------------------
+
+# HTTP request timeout settings for client connections
+# These help handle slow mobile network connections
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB max request size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB max file upload
+
+# Session timeout for mobile apps
+SESSION_COOKIE_AGE = 86400 * 30  # 30 days
+
+# Security settings for mobile connections
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# CORS settings optimized for mobile app
+CORS_ALLOW_CREDENTIALS = True
+CORS_PREFLIGHT_MAX_AGE = 86400  # Cache preflight for 24 hours
+
+# Enhanced CORS headers for mobile debugging
+CORS_EXPOSE_HEADERS = [
+    'Content-Length',
+    'X-Request-ID',
+    'X-Response-Time',
+]
