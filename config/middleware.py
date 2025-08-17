@@ -62,13 +62,29 @@ class APILoggingMiddleware:
             
             # Special handling for login failures
             if request.path == '/api/auth/login' and response.status_code == 400:
-                error_details["login_failure_type"] = "POTENTIAL_SERVER_TIMEOUT_OR_RESOURCE_ISSUE"
-                error_details["investigation_hints"] = [
-                    "Check server resource usage",
-                    "Verify database connection pool",
-                    "Monitor memory consumption",
-                    "Check for deadlocks or slow queries"
-                ]
+                # Only classify as server issue if response time is very high or specific error indicators
+                response_content = response.content.decode('utf-8', errors='ignore')[:500]
+                
+                if response_time > 5000:  # Over 5 seconds = likely server issue
+                    error_details["login_failure_type"] = "SERVER_TIMEOUT_OR_RESOURCE_ISSUE"
+                    error_details["investigation_hints"] = [
+                        "Check server resource usage",
+                        "Verify database connection pool", 
+                        "Monitor memory consumption",
+                        "Check for deadlocks or slow queries"
+                    ]
+                elif "SERVICE_ERROR" in response_content or "SERVICE_UNAVAILABLE" in response_content:
+                    error_details["login_failure_type"] = "SERVER_ERROR"
+                    error_details["investigation_hints"] = ["Check application logs for exceptions"]
+                else:
+                    # Fast 400 response = likely client validation error
+                    error_details["login_failure_type"] = "CLIENT_VALIDATION_ERROR"
+                    error_details["likely_causes"] = [
+                        "Missing email or password",
+                        "Invalid credentials",
+                        "Account deleted/deactivated",
+                        "Malformed request data"
+                    ]
                 
             error_logger.error(f"ERROR [{request_id}]: {json.dumps(error_details, indent=2)}")
 

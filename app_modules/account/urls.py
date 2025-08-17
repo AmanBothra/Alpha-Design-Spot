@@ -28,4 +28,5 @@ urlpatterns = [
     path('change-all-user-password', views.ChangeUserPasswordServiceApiView.as_view()),
     path('health', views.HealthCheckView.as_view(), name='health-check'),
     path('server-stats', views.ServerStatsView.as_view(), name='server-stats'),
+    path('login-diagnostics', views.LoginDiagnosticsView.as_view(), name='login-diagnostics'),
 ]

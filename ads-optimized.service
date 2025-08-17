@@ -1,0 +1,64 @@
+[Unit]
+Description=Alpha Design Spot Django Application
+Documentation=https://docs.gunicorn.org/
+Requires=ads.socket
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=notify
+User=root
+Group=www-data
+RuntimeDirectory=ads
+WorkingDirectory=/home/Alpha-Design-Spot
+
+# Environment
+Environment=DJANGO_SETTINGS_MODULE=config.settings
+Environment=PYTHONPATH=/home/Alpha-Design-Spot
+Environment=PYTHONUNBUFFERED=1
+
+# Optimized Gunicorn Configuration
+ExecStart=/home/Alpha-Design-Spot/my-env/bin/gunicorn \
+          --bind unix:/run/ads/ads.sock \
+          --workers 6 \
+          --worker-class sync \
+          --worker-connections 1000 \
+          --max-requests 1200 \
+          --max-requests-jitter 100 \
+          --timeout 60 \
+          --keep-alive 5 \
+          --graceful-timeout 30 \
+          --preload-app \
+          --user root \
+          --group www-data \
+          --access-logfile /var/log/ads/access.log \
+          --error-logfile /var/log/ads/error.log \
+          --log-level info \
+          --capture-output \
+          --enable-stdio-inheritance \
+          config.wsgi:application
+
+# Process management
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=30
+Restart=always
+RestartSec=3
+
+# Security and resource limits
+NoNewPrivileges=true
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Memory and CPU limits (adjust based on your server resources)
+MemoryHigh=2G
+MemoryMax=3G
+CPUQuota=400%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ads
+
+[Install]
+WantedBy=multi-user.target

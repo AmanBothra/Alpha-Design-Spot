@@ -1,0 +1,112 @@
+# Alpha Design Spot - Global Development Rules
+
+## Code Quality Standards
+
+### Django Best Practices
+- Follow Django coding conventions and patterns
+- Use Django's built-in security features
+- Implement proper error handling in all views
+- Use serializers for data validation
+- Follow DRY (Don't Repeat Yourself) principles
+
+### Logging Standards
+- Use appropriate log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Include relevant context in log messages (user, IP, operation)
+- Use structured logging with consistent formats
+- Log security events to dedicated security logger
+- Include stack traces for errors
+
+### Error Handling
+- Never expose sensitive information in error messages
+- Always log errors with sufficient context
+- Use proper HTTP status codes
+- Implement graceful error recovery where possible
+- Send critical errors to monitoring systems
+
+### Security Rules
+- Always validate and sanitize user inputs
+- Use parameterized queries to prevent SQL injection
+- Implement proper authentication and authorization
+- Log all security-related events
+- Never log sensitive data (passwords, tokens)
+- Use environment variables for sensitive configurations
+
+### Performance Guidelines
+- Use database connection pooling
+- Implement proper caching strategies
+- Monitor and log slow queries and requests
+- Use pagination for large data sets
+- Optimize API response times
+
+## Sentry Integration Rules
+
+### Error Reporting
+- All unhandled exceptions must be sent to Sentry
+- Include user context in Sentry events
+- Add custom tags for business operations
+- Set appropriate error fingerprints for grouping
+- Configure proper sampling rates to avoid noise
+
+### Performance Monitoring
+- Monitor critical business operations
+- Track API endpoint performance
+- Monitor database query performance
+- Set performance thresholds and alerts
+- Include business context in performance data
+
+### Context and Tagging
+- Tag errors by module (account, post, master, website)
+- Include user type and permissions in context
+- Add business operation context
+- Tag by environment (development, staging, production)
+- Include request context (IP, user agent, etc.)
+
+## Integration Standards
+
+### Backward Compatibility
+- New monitoring must not break existing logging
+- Maintain existing log file structure
+- Preserve current error handling patterns
+- Keep existing middleware functionality
+
+### Environment Configuration
+- Use environment-specific Sentry configurations
+- Different sampling rates for dev/staging/production
+- Environment-specific error filtering
+- Proper release tracking across environments
+
+### Documentation Requirements
+- Document all Sentry configuration changes
+- Update architecture documentation
+- Provide troubleshooting guides
+- Document monitoring and alerting procedures
+
+## Testing Standards
+
+### Error Handling Testing
+- Test error reporting to Sentry
+- Verify error context and tagging
+- Test performance monitoring accuracy
+- Validate error filtering and sampling
+
+### Integration Testing
+- Test Sentry integration with existing logging
+- Verify middleware compatibility
+- Test Celery task error reporting
+- Validate security event reporting
+
+## Monitoring and Alerting
+
+### Critical Alerts
+- Application errors affecting user functionality
+- Performance degradation beyond thresholds
+- Security incidents and suspicious activities
+- Database connection failures
+- Celery task failures
+
+### Response Procedures
+- Error triage and classification process
+- Escalation procedures for critical errors
+- Performance issue investigation workflow
+- Security incident response protocol
+- Documentation requirements for incident resolution

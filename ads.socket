@@ -1,0 +1,21 @@
+[Unit]
+Description=Alpha Design Spot Socket
+Documentation=https://docs.gunicorn.org/
+
+[Socket]
+ListenStream=/run/ads/ads.sock
+SocketUser=www-data
+SocketGroup=www-data
+SocketMode=0660
+
+# Socket options for performance
+NoDelay=true
+FastOpen=true
+Backlog=4096
+KeepAlive=true
+KeepAliveTime=600
+KeepAliveInterval=30
+KeepAliveProbes=3
+
+[Install]
+WantedBy=sockets.target

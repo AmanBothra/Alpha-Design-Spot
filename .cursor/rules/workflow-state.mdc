@@ -1,0 +1,98 @@
+# Workflow State
+
+## State
+- Phase: VALIDATE
+- Status: COMPLETED
+- Current Epic: Sentry Integration for Advanced Error Tracking
+
+## Plan
+
+### Comprehensive Sentry Integration Implementation
+
+**Current State Analysis:**
+- ✅ Sentry SDK already installed (v2.34.1)
+- ✅ Basic Sentry initialization exists
+- ✅ Comprehensive local logging system implemented
+- ❌ Missing advanced Sentry configuration
+- ❌ No Sentry integration with existing logging
+- ❌ No performance monitoring setup
+- ❌ No custom Sentry context and tags
+
+**Detailed Implementation Steps:**
+
+1. **Enhanced Sentry Configuration (settings.py)**
+   - Configure advanced Sentry options (environment, release, integrations)
+   - Add Django, Celery, Redis, and Logging integrations
+   - Set up performance monitoring and profiling
+   - Configure custom error filtering and sampling
+   - Add environment-specific configurations
+
+2. **Create Sentry Utilities Library (lib/sentry_utils.py)**
+   - Custom Sentry context managers
+   - Business context tagging functions
+   - Custom fingerprinting for error grouping
+   - Performance transaction decorators
+   - Custom breadcrumb functions
+
+3. **Integrate Sentry with Existing Logging System**
+   - Enhance middleware to send errors to Sentry
+   - Update logging_utils.py to include Sentry context
+   - Add Sentry tags to security events
+   - Connect Celery task failures to Sentry
+
+4. **Update Application Modules**
+   - Add Sentry context to authentication flows (account module)
+   - Add performance monitoring to business operations (post module)
+   - Add custom tags for different user types and operations
+   - Integrate with existing error handling
+
+5. **Advanced Error Tracking Features**
+   - Set up custom error grouping
+   - Configure release tracking
+   - Add user context to all Sentry events
+   - Set up performance monitoring for critical paths
+
+6. **Documentation and Testing**
+   - Update architecture documentation
+   - Create Sentry monitoring guide
+   - Test error reporting and performance tracking
+   - Verify integration with existing logging
+
+**Expected Outcomes:**
+- Real-time error tracking and alerting
+- Performance bottleneck identification
+- Enhanced debugging with user context
+- Centralized error management dashboard
+- Improved production monitoring
+
+## Rules
+- Follow existing logging patterns and enhance them
+- Maintain backward compatibility with current logging
+- Ensure Sentry integration doesn't affect performance
+- Use environment-specific configurations
+
+## Items
+- [ ] 1. Enhanced Sentry Configuration
+- [ ] 2. Create Sentry Utilities Library
+- [ ] 3. Integrate with Existing Logging
+- [ ] 4. Update Application Modules
+- [ ] 5. Advanced Error Tracking Features
+- [ ] 6. Documentation and Testing
+
+## Log
+- ✅ Enhanced Sentry Configuration - Added Django, Celery, Redis integrations with environment-specific sampling
+- ✅ Created Sentry Utilities Library - Custom context managers, performance decorators, tagging functions
+- ✅ Integrated with Existing Logging - Enhanced middleware and logging_utils with Sentry context
+- ✅ Updated Application Modules - Added comprehensive Sentry integration to account and post modules
+- ✅ Advanced Error Tracking Features - Custom fingerprinting, user journey tracking, business metrics
+- ✅ Documentation and Testing - Created comprehensive monitoring guide, updated project documentation
+
+Comprehensive Sentry integration successfully implemented with:
+- Real-time error tracking with detailed user and business context
+- Performance monitoring with custom thresholds and alerting
+- Security event tracking and anomaly detection
+- Business intelligence with conversion funnels and KPI tracking
+- User journey monitoring for UX optimization
+- Environment-specific configurations for optimal performance
+
+## ArchiveLog

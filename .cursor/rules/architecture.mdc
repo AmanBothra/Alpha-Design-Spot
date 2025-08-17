@@ -1,0 +1,94 @@
+# Alpha Design Spot - Architecture Documentation
+
+## Overview
+Django-based API system with modular architecture, comprehensive logging, and error tracking.
+
+## Core Architecture Patterns
+
+### Application Structure
+```
+- config/ - Main configuration and middleware
+- app_modules/ - Business logic modules (account, post, master, website)
+- lib/ - Shared utilities and libraries
+- static/ - Static assets
+- logs/ - Application logs
+```
+
+### Logging Architecture
+- **Centralized Logging**: Multiple specialized log files (auth, business, security, celery)
+- **Rotating File Handlers**: Automatic log rotation with size limits
+- **Environment-Specific**: Different log levels for dev/prod
+- **Security Monitoring**: Dedicated security event logging
+
+### Technology Stack
+- **Backend**: Django 4.2.1 with DRF
+- **Database**: PostgreSQL with connection pooling
+- **Cache**: Redis for caching and Celery broker
+- **Authentication**: JWT with SimpleJWT
+- **Task Queue**: Celery with Redis broker
+- **Monitoring**: Comprehensive logging + Sentry (in progress)
+
+### Current Patterns
+
+#### Error Handling
+- Custom logging utilities with decorators
+- Middleware-based request/response logging
+- Security event monitoring
+- API error tracking with context
+
+#### Performance Monitoring
+- Request timing in middleware
+- Slow query detection
+- Connection pooling for database
+- Redis caching strategy
+
+## Design Decisions
+
+### Monitoring and Logging Strategy
+- **File-based logging**: Primary logging to files with rotation
+- **Console logging**: Development-only console output
+- **Structured logging**: Consistent format across all modules
+- **Security focus**: Dedicated security event tracking
+- **Sentry Integration**: Real-time error tracking with detailed context
+- **Performance Monitoring**: Transaction tracking and bottleneck identification
+- **User Context**: Enhanced error tracking with user journey information
+- **Business Metrics**: Conversion funnels and feature usage analytics
+
+### Modular Design
+- **Separation of concerns**: Each app module handles specific business logic
+- **Shared utilities**: Common functionality in lib/ directory
+- **Configuration centralization**: All settings in config/
+- **Middleware chain**: Custom middleware for logging and security
+
+## Integration Points
+
+### Current Integrations
+- Django REST Framework for API
+- Celery for background tasks
+- Redis for caching and message broker
+- PostgreSQL with connection pooling
+- JWT authentication
+- **Sentry**: Advanced error tracking and performance monitoring (✅ IMPLEMENTED)
+
+### Advanced Monitoring Architecture
+- **Error Tracking**: Real-time error monitoring with custom fingerprinting
+- **Performance Monitoring**: API response time tracking and optimization alerts
+- **User Journey Tracking**: Multi-step process monitoring and conversion analysis
+- **Business Intelligence**: KPI tracking and feature usage analytics
+- **Security Monitoring**: Enhanced threat detection and incident response
+
+## Security Architecture
+
+### Current Security Measures
+- JWT token authentication
+- CORS configuration
+- Security middleware
+- Rate limiting monitoring
+- Suspicious activity logging
+
+### Security Logging
+- Failed authentication attempts
+- Permission denied events
+- Suspicious activity detection
+- Rate limit violations
+- Data access auditing

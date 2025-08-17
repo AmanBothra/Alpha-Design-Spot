@@ -58,22 +58,33 @@ class LoginView(APIView):
             password = request.data.get('password')
             
             if not email or not password:
+                # Log this as a client error, not server issue
+                import logging
+                logger = logging.getLogger('django.request')
+                request_id = getattr(request, 'request_id', 'unknown')
+                logger.warning(f"LOGIN_VALIDATION_ERROR [{request_id}]: Missing email or password - Email: {'***' if email else 'missing'}, Password: {'***' if password else 'missing'}")
+                
                 return Response({
                     'error': 'Email and password are required',
-                    'error_code': 'MISSING_CREDENTIALS'
+                    'error_code': 'MISSING_CREDENTIALS',
+                    'request_id': request_id
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check user existence and status
             user_exists = User.objects.filter(email=email).first()
+            request_id = getattr(request, 'request_id', 'unknown')
+            
             if user_exists and user_exists.is_deleted:
                 return Response({
                     'error': 'This account has been deleted. Please contact support for assistance.',
-                    'error_code': 'ACCOUNT_DELETED'
+                    'error_code': 'ACCOUNT_DELETED',
+                    'request_id': request_id
                 }, status=status.HTTP_400_BAD_REQUEST)
             elif user_exists and not user_exists.is_active:
                 return Response({
                     'error': 'This account has been deactivated. Please contact support for assistance.',
-                    'error_code': 'ACCOUNT_DEACTIVATED'
+                    'error_code': 'ACCOUNT_DEACTIVATED',
+                    'request_id': request_id
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Authenticate user
@@ -81,7 +92,8 @@ class LoginView(APIView):
             if user is None:
                 return Response({
                     'error': 'Invalid Email and Password',
-                    'error_code': 'INVALID_CREDENTIALS'
+                    'error_code': 'INVALID_CREDENTIALS',
+                    'request_id': request_id
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Generate tokens
@@ -161,10 +173,13 @@ class LoginView(APIView):
 
         except Exception as e:
             # Comprehensive error handling
+            # Import DEBUG from settings
+            from django.conf import settings
             return Response({
                 'error': 'Login service temporarily unavailable. Please try again.',
                 'error_code': 'SERVICE_ERROR',
-                'debug_info': str(e) if DEBUG else None
+                'debug_info': str(e) if settings.DEBUG else None,
+                'request_id': getattr(request, 'request_id', None)  # Include request ID for correlation
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
        
@@ -599,6 +614,65 @@ class HealthCheckView(APIView):
         
         status_code = status.HTTP_200_OK if health_data["status"] == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
         return Response(health_data, status=status_code)
+
+
+class LoginDiagnosticsView(APIView):
+    """Login diagnostics endpoint for debugging"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        """Diagnose login issues without actually authenticating"""
+        diagnostics = {
+            "request_id": getattr(request, 'request_id', 'unknown'),
+            "timestamp": timezone.now().isoformat(),
+            "request_data_received": {},
+            "validation_results": {},
+            "user_status": {},
+            "system_status": "healthy"
+        }
+        
+        # Check what data was received
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        diagnostics["request_data_received"] = {
+            "has_email": bool(email),
+            "has_password": bool(password),
+            "email_format": "valid" if email and "@" in email else "invalid" if email else "missing",
+            "content_type": request.headers.get('Content-Type', 'unknown'),
+            "request_size": len(request.body) if hasattr(request, 'body') else 0
+        }
+        
+        # Basic validation
+        if not email or not password:
+            diagnostics["validation_results"]["missing_fields"] = True
+            diagnostics["validation_results"]["missing"] = []
+            if not email:
+                diagnostics["validation_results"]["missing"].append("email")
+            if not password:
+                diagnostics["validation_results"]["missing"].append("password")
+        else:
+            diagnostics["validation_results"]["missing_fields"] = False
+            
+            # Check user existence (without revealing too much)
+            if email:
+                try:
+                    user_exists = User.objects.filter(email=email).first()
+                    if user_exists:
+                        diagnostics["user_status"] = {
+                            "exists": True,
+                            "is_active": user_exists.is_active,
+                            "is_deleted": user_exists.is_deleted,
+                            "is_verified": user_exists.is_verify,
+                            "user_type": user_exists.user_type
+                        }
+                    else:
+                        diagnostics["user_status"] = {"exists": False}
+                except Exception as e:
+                    diagnostics["user_status"] = {"error": "database_error"}
+                    diagnostics["system_status"] = "database_issue"
+        
+        return Response(diagnostics)
 
 
 class ServerStatsView(APIView):
