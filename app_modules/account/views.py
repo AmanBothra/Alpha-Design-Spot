@@ -199,13 +199,57 @@ class UserProfileListApiView(BaseModelViewSet):
 
         return queryset
     
-    # def destroy(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     instance.soft_delete()
-    #     return Response({
-    #         "status": True,
-    #         "message": "User successfully deleted"
-    #     }, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        from django.db import transaction
+        
+        try:
+            with transaction.atomic():
+                # Get fresh instance from database to avoid race conditions
+                instance = self.get_object()
+                
+                # Double-check if already deleted (race condition protection)
+                if instance.is_deleted:
+                    return Response({
+                        "status": False,
+                        "message": "User is already deleted"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Perform atomic soft delete
+                User.objects.filter(
+                    id=instance.id,
+                    is_deleted=False
+                ).update(
+                    is_deleted=True,
+                    deleted_at=timezone.now()
+                )
+                
+                # Verify deletion was successful
+                updated_count = User.objects.filter(
+                    id=instance.id,
+                    is_deleted=True
+                ).count()
+                
+                if updated_count == 0:
+                    return Response({
+                        "status": False,
+                        "message": "User deletion failed - user may have been deleted by another process"
+                    }, status=status.HTTP_409_CONFLICT)
+                
+                return Response({
+                    "status": True,
+                    "message": "User successfully deleted"
+                }, status=status.HTTP_200_OK)
+                
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "message": "User not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": f"Failed to delete user: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CheckEmailExistence(APIView):
