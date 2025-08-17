@@ -26,3 +26,4 @@ drf_api_logger==1.1.15
 flower==2.0.1
 django-celery-beat==2.5.0
 django-db-connection-pool[postgresql]
+sentry-sdk[django]
