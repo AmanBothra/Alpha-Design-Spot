@@ -63,12 +63,17 @@ class LoginView(APIView):
                     'error_code': 'MISSING_CREDENTIALS'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Check user existence and deletion status
+            # Check user existence and status
             user_exists = User.objects.filter(email=email).first()
             if user_exists and user_exists.is_deleted:
                 return Response({
                     'error': 'This account has been deleted. Please contact support for assistance.',
                     'error_code': 'ACCOUNT_DELETED'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            elif user_exists and not user_exists.is_active:
+                return Response({
+                    'error': 'This account has been deactivated. Please contact support for assistance.',
+                    'error_code': 'ACCOUNT_DEACTIVATED'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Authenticate user
@@ -217,16 +222,34 @@ class UserProfileListApiView(BaseModelViewSet):
                 user_type="customer",
                 is_verify=False,
                 is_deleted=False,  # Exclude deleted users
+                is_active=True,   # Only active users
                 created__date=today_date
             )
         elif data == "admin":
-            queryset = queryset.filter(user_type="admin", is_deleted=False)  # Exclude deleted admins
+            queryset = queryset.filter(
+                user_type="admin", 
+                is_deleted=False,  # Exclude deleted admins
+                is_active=True     # Only active admins
+            )
         elif data == "active":
-            queryset = queryset.filter(user_type="customer", is_verify=True, is_deleted=False)
+            queryset = queryset.filter(
+                user_type="customer", 
+                is_verify=True, 
+                is_deleted=False,  # Exclude deleted users
+                is_active=True     # Only active users
+            )
         elif data == "inactive":
-            queryset = queryset.filter(user_type="customer", is_verify=False, is_deleted=False)  # Exclude deleted users
+            queryset = queryset.filter(
+                user_type="customer", 
+                is_verify=False, 
+                is_deleted=False,  # Exclude deleted users
+                is_active=True     # Only active users
+            )
         elif data == "delete":
-            queryset = queryset.filter(user_type="customer", is_deleted=True)
+            queryset = queryset.filter(
+                user_type="customer", 
+                is_deleted=True    # Only show deleted users
+            )
 
         return queryset
     
@@ -252,6 +275,7 @@ class UserProfileListApiView(BaseModelViewSet):
                     is_deleted=False
                 ).update(
                     is_deleted=True,
+                    is_active=False,  # Also set is_active to False
                     deleted_at=timezone.now()
                 )
                 

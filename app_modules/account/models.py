@@ -32,21 +32,24 @@ class User(AbstractUser, BaseModel):
     
     class Meta:
         indexes = [
-            models.Index(fields=['user_type', 'is_deleted']),
+            models.Index(fields=['user_type', 'is_deleted', 'is_active']),
             models.Index(fields=['email', 'is_deleted']),
-            models.Index(fields=['is_verify', 'user_type']),
+            models.Index(fields=['is_verify', 'user_type', 'is_active']),
             models.Index(fields=['whatsapp_number']),
             models.Index(fields=['no_of_post', 'user_type']),
             models.Index(fields=['created', 'user_type']),
+            models.Index(fields=['is_deleted', 'is_active']),  # For user lists filtering
         ]
     
     def soft_delete(self):
         self.is_deleted = True
+        self.is_active = False  # Also set is_active to False
         self.deleted_at = timezone.now()
         self.save()
 
     def restore(self):
         self.is_deleted = False
+        self.is_active = True  # Also restore is_active to True
         self.deleted_at = None
         self.save()
 
