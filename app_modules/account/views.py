@@ -221,7 +221,7 @@ class UserProfileListApiView(BaseModelViewSet):
         elif data == "admin":
             queryset = queryset.filter(user_type="admin")
         elif data == "active":
-            queryset = queryset.filter(user_type="customer", is_verify=True)
+            queryset = queryset.filter(user_type="customer", is_verify=True, is_deleted=False)
         elif data == "inactive":
             queryset = queryset.filter(user_type="customer", is_verify=False)
         elif data == "delete":
@@ -513,3 +513,107 @@ class ChangeUserPasswordServiceApiView(APIView):
             user.save()
 
         return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
+
+
+class HealthCheckView(APIView):
+    """Health check endpoint for monitoring server status"""
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        import time
+        from django.db import connection
+        from django.core.cache import cache
+        
+        start_time = time.time()
+        health_data = {
+            "status": "healthy",
+            "timestamp": timezone.now().isoformat(),
+            "server": "online",
+            "checks": {}
+        }
+        
+        try:
+            # Database check
+            db_start = time.time()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+            health_data["checks"]["database"] = {
+                "status": "healthy",
+                "response_time_ms": round((time.time() - db_start) * 1000, 2)
+            }
+        except Exception as e:
+            health_data["checks"]["database"] = {
+                "status": "unhealthy",
+                "error": str(e)
+            }
+            health_data["status"] = "unhealthy"
+        
+        try:
+            # Cache check
+            cache_start = time.time()
+            cache.set("health_check", "ok", 30)
+            cache_value = cache.get("health_check")
+            health_data["checks"]["cache"] = {
+                "status": "healthy" if cache_value == "ok" else "unhealthy",
+                "response_time_ms": round((time.time() - cache_start) * 1000, 2)
+            }
+        except Exception as e:
+            health_data["checks"]["cache"] = {
+                "status": "unhealthy", 
+                "error": str(e)
+            }
+        
+        # Overall response time
+        health_data["total_response_time_ms"] = round((time.time() - start_time) * 1000, 2)
+        
+        status_code = status.HTTP_200_OK if health_data["status"] == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(health_data, status=status_code)
+
+
+class ServerStatsView(APIView):
+    """Server statistics endpoint for monitoring"""
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        import psutil
+        from django.db import connections
+        
+        try:
+            # System stats
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            
+            # Database connection pool stats
+            db_stats = {}
+            for conn_name in connections:
+                conn = connections[conn_name]
+                if hasattr(conn, 'pool'):
+                    pool = conn.pool
+                    db_stats[conn_name] = {
+                        "pool_size": getattr(pool, '_pool', {}).qsize() if hasattr(pool, '_pool') else 0,
+                        "overflow": getattr(pool, '_overflow', 0),
+                        "checked_in": getattr(pool, '_checked_in', 0)
+                    }
+            
+            stats = {
+                "timestamp": timezone.now().isoformat(),
+                "system": {
+                    "cpu_percent": cpu_percent,
+                    "memory_percent": memory.percent,
+                    "memory_available_mb": round(memory.available / 1024 / 1024, 2),
+                    "disk_percent": round((disk.total - disk.free) / disk.total * 100, 2),
+                    "disk_free_gb": round(disk.free / 1024 / 1024 / 1024, 2)
+                },
+                "database": db_stats,
+                "active_users_count": User.objects.filter(is_deleted=False).count()
+            }
+            
+            return Response(stats)
+            
+        except Exception as e:
+            return Response({
+                "error": "Could not retrieve stats",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

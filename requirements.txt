@@ -27,3 +27,4 @@ flower==2.0.1
 django-celery-beat==2.5.0
 django-db-connection-pool[postgresql]
 sentry-sdk[django]
+psutil==5.9.5
