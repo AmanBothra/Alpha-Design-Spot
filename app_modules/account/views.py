@@ -256,11 +256,28 @@ class UserProfileListApiView(BaseModelViewSet):
         return queryset
 
     def destroy(self, request, *args, **kwargs):
+        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+
         try:
             instance = self.get_object()
+
+            # Clean up tokens first
+            OutstandingToken.objects.filter(user=instance).delete()
+
+            # Then delete the user
             self.perform_destroy(instance)
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         except Http404:
             pass
+        except Exception as e:
+            # Log the error for debugging
+            print(f"Error deleting user: {str(e)}")
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
