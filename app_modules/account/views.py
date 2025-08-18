@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.forms import IntegerField
+from django.http import Http404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, viewsets, exceptions, status
@@ -254,46 +255,13 @@ class UserProfileListApiView(BaseModelViewSet):
 
         return queryset
 
-    # def destroy(self, request, *args, **kwargs):
-    #     from django.db import transaction
-    #
-    #     try:
-    #         with transaction.atomic():
-    #             # Get the user instance
-    #             instance = self.get_object()
-    #             user_id = instance.id
-    #
-    #             # Now perform the user deletion
-    #             instance.delete()
-    #
-    #             # Verify deletion was successful
-    #             user_still_exists = User.objects.filter(id=user_id).exists()
-    #
-    #             if user_still_exists:
-    #                 return Response({
-    #                     "success": False,
-    #                     "status": False,
-    #                     "message": "User deletion failed"
-    #                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    #
-    #             return Response({
-    #                 "success": True,
-    #                 "status": True,
-    #                 "message": "User permanently deleted from database"
-    #             }, status=status.HTTP_200_OK)
-    #
-    #     except User.DoesNotExist:
-    #         return Response({
-    #             "success": False,
-    #             "status": False,
-    #             "message": "User not found"
-    #         }, status=status.HTTP_404_NOT_FOUND)
-    #     except Exception as e:
-    #         return Response({
-    #             "success": False,
-    #             "status": False,
-    #             "message": f"Failed to delete user: {str(e)}"
-    #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+        except Http404:
+            pass
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CheckEmailExistence(APIView):
