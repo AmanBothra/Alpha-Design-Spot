@@ -254,53 +254,46 @@ class UserProfileListApiView(BaseModelViewSet):
 
         return queryset
 
-    def destroy(self, request, *args, **kwargs):
-        from django.db import transaction
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
-
-        try:
-            with transaction.atomic():
-                # Get the user instance
-                instance = self.get_object()
-                user_id = instance.id
-
-                # Delete all outstanding tokens for this user
-                # OutstandingToken.objects.filter(user=instance).delete()
-
-                # Note: BlacklistedToken entries will be automatically deleted due to CASCADE
-                # relationship with OutstandingToken
-
-                # Now perform the user deletion
-                instance.delete()
-
-                # Verify deletion was successful
-                user_still_exists = User.objects.filter(id=user_id).exists()
-
-                if user_still_exists:
-                    return Response({
-                        "success": False,
-                        "status": False,
-                        "message": "User deletion failed"
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-                return Response({
-                    "success": True,
-                    "status": True,
-                    "message": "User permanently deleted from database"
-                }, status=status.HTTP_200_OK)
-
-        except User.DoesNotExist:
-            return Response({
-                "success": False,
-                "status": False,
-                "message": "User not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({
-                "success": False,
-                "status": False,
-                "message": f"Failed to delete user: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # def destroy(self, request, *args, **kwargs):
+    #     from django.db import transaction
+    #
+    #     try:
+    #         with transaction.atomic():
+    #             # Get the user instance
+    #             instance = self.get_object()
+    #             user_id = instance.id
+    #
+    #             # Now perform the user deletion
+    #             instance.delete()
+    #
+    #             # Verify deletion was successful
+    #             user_still_exists = User.objects.filter(id=user_id).exists()
+    #
+    #             if user_still_exists:
+    #                 return Response({
+    #                     "success": False,
+    #                     "status": False,
+    #                     "message": "User deletion failed"
+    #                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #
+    #             return Response({
+    #                 "success": True,
+    #                 "status": True,
+    #                 "message": "User permanently deleted from database"
+    #             }, status=status.HTTP_200_OK)
+    #
+    #     except User.DoesNotExist:
+    #         return Response({
+    #             "success": False,
+    #             "status": False,
+    #             "message": "User not found"
+    #         }, status=status.HTTP_404_NOT_FOUND)
+    #     except Exception as e:
+    #         return Response({
+    #             "success": False,
+    #             "status": False,
+    #             "message": f"Failed to delete user: {str(e)}"
+    #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CheckEmailExistence(APIView):
