@@ -74,13 +74,7 @@ class LoginView(APIView):
             user_exists = User.objects.filter(email=email).first()
             request_id = getattr(request, 'request_id', 'unknown')
             
-            if user_exists and user_exists.is_deleted:
-                return Response({
-                    'error': 'This account has been deleted. Please contact support for assistance.',
-                    'error_code': 'ACCOUNT_DELETED',
-                    'request_id': request_id
-                }, status=status.HTTP_400_BAD_REQUEST)
-            elif user_exists and not user_exists.is_active:
+            if user_exists and not user_exists.is_active:
                 return Response({
                     'error': 'This account has been deactivated. Please contact support for assistance.',
                     'error_code': 'ACCOUNT_DEACTIVATED',
@@ -224,7 +218,7 @@ class UserProfileListApiView(BaseModelViewSet):
     serializer_class = UserProfileListSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = [
-        'first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify', 'is_deleted'
+        'first_name', 'last_name', 'email', 'whatsapp_number', 'is_verify'
         ]
 
     def get_queryset(self):
@@ -236,35 +230,27 @@ class UserProfileListApiView(BaseModelViewSet):
             queryset = queryset.filter(
                 user_type="customer",
                 is_verify=False,
-                is_deleted=False,  # Exclude deleted users
-                is_active=True,   # Only active users
+                is_active=True,
                 created__date=today_date
             )
         elif data == "admin":
             queryset = queryset.filter(
                 user_type="admin", 
-                is_deleted=False,  # Exclude deleted admins
-                is_active=True     # Only active admins
+                is_active=True
             )
         elif data == "active":
             queryset = queryset.filter(
                 user_type="customer", 
                 is_verify=True, 
-                is_deleted=False,  # Exclude deleted users
-                is_active=True     # Only active users
+                is_active=True
             )
         elif data == "inactive":
             queryset = queryset.filter(
                 user_type="customer", 
                 is_verify=False, 
-                is_deleted=False,  # Exclude deleted users
-                is_active=True     # Only active users
+                is_active=True
             )
-        elif data == "delete":
-            queryset = queryset.filter(
-                user_type="customer", 
-                is_deleted=True    # Only show deleted users
-            )
+        # Remove "delete" filter since there are no deleted users anymore
 
         return queryset
     
@@ -273,44 +259,27 @@ class UserProfileListApiView(BaseModelViewSet):
         
         try:
             with transaction.atomic():
-                # Get fresh instance from database to avoid race conditions
+                # Get the user instance
                 instance = self.get_object()
+                user_id = instance.id
                 
-                # Double-check if already deleted (race condition protection)
-                if instance.is_deleted:
+                # Perform hard delete - permanently remove from database
+                instance.delete()
+                
+                # Verify deletion was successful by checking if user no longer exists
+                user_still_exists = User.objects.filter(id=user_id).exists()
+                
+                if user_still_exists:
                     return Response({
                         "success": False,
                         "status": False,
-                        "message": "User is already deleted"
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                # Perform atomic soft delete
-                User.objects.filter(
-                    id=instance.id,
-                    is_deleted=False
-                ).update(
-                    is_deleted=True,
-                    is_active=False,  # Also set is_active to False
-                    deleted_at=timezone.now()
-                )
-                
-                # Verify deletion was successful
-                updated_count = User.objects.filter(
-                    id=instance.id,
-                    is_deleted=True
-                ).count()
-                
-                if updated_count == 0:
-                    return Response({
-                        "success": False,
-                        "status": False,
-                        "message": "User deletion failed - user may have been deleted by another process"
-                    }, status=status.HTTP_409_CONFLICT)
+                        "message": "User deletion failed"
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
                 return Response({
                     "success": True,
                     "status": True,
-                    "message": "User successfully deleted"
+                    "message": "User permanently deleted from database"
                 }, status=status.HTTP_200_OK)
                 
         except User.DoesNotExist:
@@ -662,7 +631,6 @@ class LoginDiagnosticsView(APIView):
                         diagnostics["user_status"] = {
                             "exists": True,
                             "is_active": user_exists.is_active,
-                            "is_deleted": user_exists.is_deleted,
                             "is_verified": user_exists.is_verify,
                             "user_type": user_exists.user_type
                         }
@@ -711,7 +679,7 @@ class ServerStatsView(APIView):
                     "disk_free_gb": round(disk.free / 1024 / 1024 / 1024, 2)
                 },
                 "database": db_stats,
-                "active_users_count": User.objects.filter(is_deleted=False).count()
+                "active_users_count": User.objects.filter(is_active=True).count()
             }
             
             return Response(stats)

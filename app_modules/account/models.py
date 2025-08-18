@@ -22,8 +22,6 @@ class User(AbstractUser, BaseModel):
     dob = models.DateField(null=True, blank=True)
     no_of_post = models.IntegerField(default=1)
     is_verify = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -31,27 +29,16 @@ class User(AbstractUser, BaseModel):
     objects = UserManager()
     
     class Meta:
+        app_label = 'account'
         indexes = [
-            models.Index(fields=['user_type', 'is_deleted', 'is_active']),
-            models.Index(fields=['email', 'is_deleted']),
+            models.Index(fields=['user_type', 'is_active']),
+            models.Index(fields=['email']),
             models.Index(fields=['is_verify', 'user_type', 'is_active']),
             models.Index(fields=['whatsapp_number']),
             models.Index(fields=['no_of_post', 'user_type']),
             models.Index(fields=['created', 'user_type']),
-            models.Index(fields=['is_deleted', 'is_active']),  # For user lists filtering
         ]
     
-    def soft_delete(self):
-        self.is_deleted = True
-        self.is_active = False  # Also set is_active to False
-        self.deleted_at = timezone.now()
-        self.save()
-
-    def restore(self):
-        self.is_deleted = False
-        self.is_active = True  # Also restore is_active to True
-        self.deleted_at = None
-        self.save()
 
     def __str__(self):
         return f"{self.first_name}"

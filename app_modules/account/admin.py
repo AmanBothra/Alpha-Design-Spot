@@ -29,8 +29,6 @@ class UserAdmin(DefaultUserAdmin):
                     "is_superuser",
                     "is_staff",
                     "is_verify",
-                    "is_deleted",
-                    "deleted_at",
                     "groups",
                     "user_permissions",
                 )
