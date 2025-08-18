@@ -256,29 +256,54 @@ class UserProfileListApiView(BaseModelViewSet):
         return queryset
 
     def destroy(self, request, *args, **kwargs):
-        from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+        from django.db import transaction
 
         try:
-            instance = self.get_object()
+            with transaction.atomic():
+                instance = self.get_object()
 
-            # Clean up tokens first
-            OutstandingToken.objects.filter(user=instance).delete()
+                # Try to import and clean up tokens if blacklist app is installed
+                try:
+                    from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+                    # Delete all outstanding tokens for this user
+                    OutstandingToken.objects.filter(user=instance).delete()
+                except ImportError:
+                    # Token blacklist app might not be installed
+                    pass
+                except AttributeError:
+                    # Different version of simplejwt or model structure
+                    pass
 
-            # Then delete the user
-            self.perform_destroy(instance)
+                # Try alternative approach - check if tokens exist in a different way
+                try:
+                    from django.apps import apps
+                    if apps.is_installed('rest_framework_simplejwt.token_blacklist'):
+                        OutstandingToken = apps.get_model('token_blacklist', 'OutstandingToken')
+                        OutstandingToken.objects.filter(user=instance).delete()
+                except:
+                    pass
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                # Delete the user
+                self.perform_destroy(instance)
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
         except Http404:
-            pass
-        except Exception as e:
-            # Log the error for debugging
-            print(f"Error deleting user: {str(e)}")
             return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                "success": False,
+                "message": "User not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # Log the full error for debugging
+            import traceback
+            print(f"Error deleting user: {str(e)}")
+            print(traceback.format_exc())
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({
+                "success": False,
+                "error": {"error": str(e)},
+                "message": "Internal Server Error"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CheckEmailExistence(APIView):
