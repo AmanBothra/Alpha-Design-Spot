@@ -265,7 +265,7 @@ class UserProfileListApiView(BaseModelViewSet):
                 user_id = instance.id
 
                 # Delete all outstanding tokens for this user
-                OutstandingToken.objects.filter(user=instance).delete()
+                # OutstandingToken.objects.filter(user=instance).delete()
 
                 # Note: BlacklistedToken entries will be automatically deleted due to CASCADE
                 # relationship with OutstandingToken
